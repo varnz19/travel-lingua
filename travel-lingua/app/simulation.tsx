@@ -35,6 +35,27 @@ const scenarios = {
       text: "How many nights?",
       options: ["Two nights", "Three nights", "One night"]
     }
+  ],
+
+  taxi: [
+    {
+      text: "Where do you want to go?",
+      options: ["Take me to the airport", "To the hotel please", "City center"]
+    }
+  ],
+
+  shopping: [
+    {
+      text: "Can I help you?",
+      options: ["I am looking for shoes", "Show me jackets", "Just browsing"]
+    }
+  ],
+
+  airport: [
+    {
+      text: "May I see your ticket?",
+      options: ["Here it is", "One moment please", "Yes"]
+    }
   ]
 };
 
@@ -52,12 +73,10 @@ export default function Simulation() {
 
   const scrollRef = useRef<ScrollView>(null);
 
-  /* ---------- AUTO SCROLL ---------- */
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [chat]);
 
-  /* ---------- HANDLE OPTION ---------- */
   const handleSelect = (option: string) => {
     const nextStep = step + 1;
 
@@ -77,44 +96,39 @@ export default function Simulation() {
     setStep(nextStep);
   };
 
-  /* ---------- HANDLE TEXT INPUT ---------- */
   const handleSend = () => {
     if (!input.trim()) return;
 
     const updatedChat = [
       ...chat,
       { sender: "user", text: input },
-      {
-        sender: "bot",
-        text: "Try saying: 'Could you help me with that?'"
-      }
+      { sender: "bot", text: "Try saying: 'Could you help me with that?'" }
     ];
 
     setChat(updatedChat);
     setInput('');
   };
 
-  /* ---------- VOICE (basic speak) ---------- */
   const handleVoice = () => {
     Speech.speak("You can say: Could you help me with that?");
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f5f6fa' }}>
+    <View style={{ flex: 1, backgroundColor: '#eef1f6' }}>
 
       {/* HEADER */}
       <View style={{
         padding: 15,
-        borderBottomWidth: 1,
-        borderColor: '#eee',
-        backgroundColor: '#fff'
+        backgroundColor: '#6c5ce7',
+        borderBottomLeftRadius: 20,
+        borderBottomRightRadius: 20
       }}>
-        <Text style={{ fontSize: 18, fontWeight: 'bold' }}>
+        <Text style={{ color: '#fff', fontSize: 18, fontWeight: '600' }}>
           Simulation
         </Text>
       </View>
 
-      {/* CHAT AREA */}
+      {/* CHAT */}
       <ScrollView
         ref={scrollRef}
         style={{ flex: 1, padding: 15 }}
@@ -130,9 +144,7 @@ export default function Simulation() {
               borderRadius: 16,
               marginBottom: 10,
               maxWidth: '75%',
-              shadowColor: '#000',
-              shadowOpacity: 0.05,
-              shadowRadius: 4
+              elevation: 2
             }}
           >
             <Text style={{
@@ -146,7 +158,7 @@ export default function Simulation() {
 
       {/* OPTIONS */}
       {scenario[step] && (
-        <View style={{ paddingHorizontal: 15 }}>
+        <View style={{ paddingHorizontal: 12 }}>
           {scenario[step].options.map((opt, index) => (
             <TouchableOpacity
               key={index}
@@ -154,10 +166,10 @@ export default function Simulation() {
               style={{
                 backgroundColor: '#fff',
                 padding: 14,
-                borderRadius: 12,
+                borderRadius: 20,
                 marginBottom: 8,
                 borderWidth: 1,
-                borderColor: '#eee'
+                borderColor: '#ddd'
               }}
             >
               <Text>{opt}</Text>
@@ -172,9 +184,9 @@ export default function Simulation() {
         padding: 10,
         backgroundColor: '#fff',
         borderTopWidth: 1,
-        borderColor: '#eee'
+        borderColor: '#eee',
+        alignItems: 'center'
       }}>
-
         <TextInput
           value={input}
           onChangeText={setInput}
@@ -187,7 +199,6 @@ export default function Simulation() {
           }}
         />
 
-        {/* VOICE BUTTON */}
         <TouchableOpacity
           onPress={handleVoice}
           style={{
@@ -200,7 +211,6 @@ export default function Simulation() {
           <Text style={{ color: '#fff' }}>🎤</Text>
         </TouchableOpacity>
 
-        {/* SEND BUTTON */}
         <TouchableOpacity
           onPress={handleSend}
           style={{
@@ -212,7 +222,6 @@ export default function Simulation() {
         >
           <Text style={{ color: '#fff' }}>➤</Text>
         </TouchableOpacity>
-
       </View>
 
     </View>
