@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "expo-av": "^16.0.8",
+    "expo-speech": "^55.0.12"
+  }
+}

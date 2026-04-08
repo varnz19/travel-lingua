@@ -1,8 +1,19 @@
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function Home() {
+  const router = useRouter();
+
+  const scenarios = [
+    { name: "Restaurant Order", key: "restaurant", level: "Beginner", icon: "🍽️" },
+    { name: "Hotel Check-in", key: "hotel", level: "Intermediate", icon: "🏨" },
+    { name: "Taking a Taxi", key: "taxi", level: "Beginner", icon: "🚕" },
+    { name: "Shopping", key: "shopping", level: "Intermediate", icon: "🛍️" },
+    { name: "Airport Navigation", key: "airport", level: "Advanced", icon: "✈️" }
+  ];
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#f4f5f7' }}>
+    <View style={{ flex: 1, backgroundColor: '#f5f6fa' }}>
 
       <ScrollView contentContainerStyle={{ padding: 20 }}>
 
@@ -16,7 +27,7 @@ export default function Home() {
 
         {/* Stats Card */}
         <View style={{
-          backgroundColor: '#dff5e1',
+          backgroundColor: '#e8f7ec',
           padding: 20,
           borderRadius: 16,
           marginBottom: 20
@@ -28,7 +39,7 @@ export default function Home() {
           <View style={{
             flexDirection: 'row',
             justifyContent: 'space-between',
-            marginTop: 15
+            marginTop: 10
           }}>
             <Text>12 Completed</Text>
             <Text>4.2 Rating</Text>
@@ -37,54 +48,62 @@ export default function Home() {
         </View>
 
         {/* Scenario Cards */}
-        {[
-          { title: "Restaurant Order", level: "Beginner" },
-          { title: "Hotel Check-in", level: "Intermediate" },
-          { title: "Taking a Taxi", level: "Beginner" },
-          { title: "Shopping", level: "Intermediate" },
-          { title: "Airport Navigation", level: "Advanced" }
-        ].map((item, index) => (
+        {scenarios.map((item, index) => (
           <TouchableOpacity
             key={index}
+            onPress={() =>
+              router.push({
+                pathname: '/simulation',
+                params: { type: item.key }
+              })
+            }
             style={{
               backgroundColor: '#fff',
-              padding: 15,
-              borderRadius: 16,
+              padding: 16,
+              borderRadius: 18,
               marginBottom: 15,
               shadowColor: '#000',
               shadowOpacity: 0.05,
-              shadowRadius: 5
+              shadowRadius: 6,
+              elevation: 2
             }}
           >
-            <Text style={{ fontSize: 18, fontWeight: '600' }}>
-              {item.title}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
 
-            <Text style={{ color: '#888', marginTop: 5 }}>
-              {item.level}
-            </Text>
+              {/* Icon */}
+              <Text style={{ fontSize: 24, marginRight: 12 }}>
+                {item.icon}
+              </Text>
+
+              {/* Text */}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '600' }}>
+                  {item.name}
+                </Text>
+
+                {/* Difficulty Badge */}
+                <Text style={{
+                  marginTop: 4,
+                  fontSize: 12,
+                  color:
+                    item.level === "Beginner" ? "#27ae60" :
+                    item.level === "Intermediate" ? "#f39c12" :
+                    "#e74c3c"
+                }}>
+                  {item.level}
+                </Text>
+              </View>
+
+              {/* Arrow */}
+              <Text style={{ fontSize: 18, color: '#bbb' }}>
+                ›
+              </Text>
+
+            </View>
           </TouchableOpacity>
         ))}
 
       </ScrollView>
-
-      {/* Bottom Nav */}
-      <View style={{
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        padding: 15,
-        borderTopWidth: 1,
-        borderColor: '#eee',
-        backgroundColor: '#fff'
-      }}>
-        <Text>Home</Text>
-        <Text>Learn</Text>
-        <Text style={{ color: '#6c5ce7', fontWeight: 'bold' }}>
-          Simulate
-        </Text>
-        <Text>Profile</Text>
-      </View>
-
     </View>
   );
 }
