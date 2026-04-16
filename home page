@@ -12,10 +12,12 @@ import {
 export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* NEW: This wrapper forces the app to stay phone-sized on the web! */}
       <View style={styles.mobileWrapper}>
         
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.container}
+          showsVerticalScrollIndicator={false}
+        >
           
           {/* Header Section */}
           <View style={styles.headerContainer}>
@@ -92,8 +94,11 @@ export default function App() {
             <Text style={styles.sectionIcon}>📈</Text>
           </View>
 
-          {/* Lesson Card 1 */}
-          <TouchableOpacity style={styles.lessonCard}>
+          {/* Lesson Card 1 - NOW CLICKABLE */}
+          <TouchableOpacity 
+            style={styles.lessonCard}
+            onPress={() => alert("Starting Lesson: Basic Hello & Goodbye")}
+          >
             <Text style={styles.lessonEmoji}>👋</Text>
             <View style={styles.lessonContent}>
               <Text style={styles.lessonCategory}>Greetings</Text>
@@ -108,8 +113,11 @@ export default function App() {
             </View>
           </TouchableOpacity>
 
-          {/* Lesson Card 2 */}
-          <TouchableOpacity style={styles.lessonCard}>
+          {/* Lesson Card 2 - NOW CLICKABLE */}
+          <TouchableOpacity 
+            style={styles.lessonCard}
+            onPress={() => alert("Starting Lesson: Ordering at Restaurants")}
+          >
             <Text style={styles.lessonEmoji}>🍜</Text>
             <View style={styles.lessonContent}>
               <Text style={styles.lessonCategory}>Food</Text>
@@ -124,8 +132,11 @@ export default function App() {
             </View>
           </TouchableOpacity>
 
-          {/* Lesson Card 3 */}
-          <TouchableOpacity style={styles.lessonCard}>
+          {/* Lesson Card 3 - NOW CLICKABLE */}
+          <TouchableOpacity 
+            style={styles.lessonCard}
+            onPress={() => alert("Starting Lesson: Taking a Taxi")}
+          >
             <Text style={styles.lessonEmoji}>🚕</Text>
             <View style={styles.lessonContent}>
               <Text style={styles.lessonCategory}>Transport</Text>
@@ -140,8 +151,11 @@ export default function App() {
             </View>
           </TouchableOpacity>
 
-          {/* Pronunciation Banner */}
-          <TouchableOpacity style={styles.pronunciationCard}>
+          {/* Pronunciation Banner - NOW CLICKABLE */}
+          <TouchableOpacity 
+            style={styles.pronunciationCard}
+            onPress={() => alert("Opening Pronunciation Practice")}
+          >
             <Text style={styles.pronunciationIcon}>🔊</Text>
             <View style={styles.pronunciationContent}>
               <Text style={styles.pronunciationTitle}>Practice your pronunciation</Text>
@@ -186,21 +200,19 @@ export default function App() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    // On the web, we make the very outer background slightly darker grey 
-    // so the white "phone" stands out in the middle.
     backgroundColor: Platform.OS === 'web' ? '#E2E8F0' : '#F8F9FA', 
   },
   mobileWrapper: {
     flex: 1,
     width: '100%',
-    maxWidth: 480, // This is the magic number! It won't grow wider than 480px.
-    alignSelf: 'center', // This centers it on your desktop monitor.
+    maxWidth: 480, 
+    alignSelf: 'center', 
     backgroundColor: '#F8F9FA',
-    // Adds a nice shadow on the web to make it look like a floating device
     ...Platform.select({
       web: {
         boxShadow: '0px 0px 20px rgba(0,0,0,0.1)',
         height: '100vh', 
+        overflow: 'hidden', 
       }
     })
   },
