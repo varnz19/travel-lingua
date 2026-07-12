@@ -41,3 +41,8 @@ app-example
 # generated native folders
 /ios
 /android
+
+# Compiled legacy binaries
+utils/*.exe
+utils/glob os
+

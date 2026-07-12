@@ -1,98 +1,210 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Platform } from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+export default function LearnJapaneseScreen() {
+  const router = useRouter();
 
-export default function HomeScreen() {
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.webWrapper}>
+      <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+          {/* Header */}
+          <View style={styles.header}>
+          <Text style={styles.title}>Learn Japanese</Text>
+          <Text style={styles.subtitle}>Choose a category to start learning</Text>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Stats Row */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#2563EB' }]}>127</Text>
+            <Text style={styles.statLabel}>Phrases{'\n'}Learned</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#9333EA' }]}>89%</Text>
+            <Text style={styles.statLabel}>Retention{'\n'}Rate</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statValue, { color: '#EA580C' }]}>7</Text>
+            <Text style={styles.statLabel}>Day{'\n'}Streak</Text>
+          </View>
+        </View>
+
+        {/* Category List */}
+        <View style={styles.listContainer}>
+          <CategoryCard 
+            emoji="👋" 
+            bgColor="#3B82F6" 
+            title="Greetings" 
+            phrases={12} 
+            onPress={() => router.push('/flashcards/greetings')}
+          />
+          <CategoryCard 
+            emoji="🍜" 
+            bgColor="#F97316" 
+            title="Food & Dining" 
+            phrases={24} 
+            active 
+            onPress={() => router.push('/flashcards/food')}
+          />
+          <CategoryCard 
+            emoji="🚕" 
+            bgColor="#10B981" 
+            title="Transport" 
+            phrases={18} 
+            onPress={() => router.push('/flashcards/transport')}
+          />
+          <CategoryCard 
+            emoji="🚨" 
+            bgColor="#EF4444" 
+            title="Emergency" 
+            phrases={15} 
+            onPress={() => router.push('/flashcards/emergency')}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  </View>
+  );
+}
+
+function CategoryCard({ emoji, bgColor, title, phrases, active = false, onPress }: { emoji: string; bgColor: string; title: string; phrases: number; active?: boolean; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={styles.card} activeOpacity={0.7} onPress={onPress}>
+      <View style={styles.cardLeft}>
+        <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
+          <Text style={styles.emoji}>{emoji}</Text>
+        </View>
+        <View style={styles.cardTextContainer}>
+          <Text style={styles.cardTitle}>{title}</Text>
+          <Text style={styles.cardSubtitle}>{phrases} phrases</Text>
+        </View>
+      </View>
+      <Text style={[styles.chevron, active && styles.activeChevron]}>›</Text>
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  webWrapper: {
+    flex: 1,
+    backgroundColor: '#E2E8F0',
   },
-  stepContainer: {
-    gap: 8,
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8F9FE',
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' ? ({
+      boxShadow: '0px 0px 20px rgba(0,0,0,0.1)',
+      height: '100vh',
+    } as any) : {}),
+  },
+  container: {
+    padding: 24,
+    paddingTop: Platform.OS === 'android' ? 60 : 30,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 32,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  subtitle: {
+    fontSize: 16,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 32,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    paddingVertical: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
+    alignItems: 'flex-start',
+  },
+  statValue: {
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  listContainer: {
+    gap: 16,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  emoji: {
+    fontSize: 26,
+  },
+  cardTextContainer: {
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  chevron: {
+    fontSize: 28,
+    color: '#CBD5E1',
+    fontWeight: '400',
+    marginRight: 8,
+    paddingBottom: 2,
+  },
+  activeChevron: {
+    color: '#A855F7',
+    fontWeight: '600',
   },
 });
