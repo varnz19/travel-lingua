@@ -44,15 +44,21 @@ export default function LearnScreen() {
         {/* Global Action Utility Buttons */}
         <View style={styles.utilitiesRow}>
           <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push('/learn/favorites')}>
-            <Ionicons name="star-outline" size={16} color="#8B5CF6" style={{ marginRight: 6 }} />
+            <View style={styles.utilityIconBg}>
+              <Ionicons name="star-outline" size={18} color="#2563EB" />
+            </View>
             <Text style={styles.utilityBtnText}>Favorites</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push('/learn/translator')}>
-            <Ionicons name="language-outline" size={16} color="#8B5CF6" style={{ marginRight: 6 }} />
+            <View style={styles.utilityIconBg}>
+              <Ionicons name="language-outline" size={18} color="#2563EB" />
+            </View>
             <Text style={styles.utilityBtnText}>Translator</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.utilityBtn} onPress={() => router.push('/learn/pronunciation')}>
-            <Ionicons name="mic-outline" size={16} color="#8B5CF6" style={{ marginRight: 6 }} />
+            <View style={styles.utilityIconBg}>
+              <Ionicons name="mic-outline" size={18} color="#2563EB" />
+            </View>
             <Text style={styles.utilityBtnText}>Speak</Text>
           </TouchableOpacity>
         </View>
@@ -133,11 +139,11 @@ export default function LearnScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   header: {
     marginBottom: 20,
@@ -167,12 +173,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
+  },
+  utilityIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   utilityBtnText: {
     fontSize: 13,
@@ -185,7 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginBottom: 16,
@@ -206,11 +221,11 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   filterBadgeActive: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   filterText: {
     fontSize: 13,
@@ -230,11 +245,11 @@ const styles = StyleSheet.create({
     padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -284,7 +299,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#06B6D4',
     borderRadius: 3,
   }
 });

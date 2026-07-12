@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { simulationService, Scenario } from '../../../services/simulationService';
 import { ProfileContext } from '../../../context/ProfileContext';
-import { Ionicons } from '@expo/vector-icons';
 
-export default function SimulationIndex() {
+export default function SimulateScreen() {
   const router = useRouter();
-  const { simulationsCompleted, level } = useContext(ProfileContext);
+  const { simulationsCompleted } = useContext(ProfileContext);
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
 
   useEffect(() => {
@@ -21,62 +21,56 @@ export default function SimulationIndex() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <Text style={styles.headerTitle}>Practice Scenarios</Text>
-        <Text style={styles.headerSubtitle}>Real-world conversations to build travel confidence</Text>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Dialogue Practice</Text>
+          <Text style={styles.headerSubtitle}>Roleplay critical travel branching scenarios</Text>
+        </View>
 
-        {/* Stats Card */}
+        {/* Quick Stats Widget */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Practice Performance</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statCol}>
-              <Text style={styles.statVal}>{simulationsCompleted}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
-            </View>
-            <View style={styles.statCol}>
-              <Text style={styles.statVal}>{Math.round(85 + level * 1.5)}%</Text>
-              <Text style={styles.statLabel}>Avg Accuracy</Text>
-            </View>
-            <View style={styles.statCol}>
-              <Text style={styles.statVal}>{simulationsCompleted * 50} XP</Text>
-              <Text style={styles.statLabel}>XP Earned</Text>
-            </View>
+          <View style={styles.statCol}>
+            <Text style={styles.statVal}>{simulationsCompleted}</Text>
+            <Text style={styles.statLabel}>Practiced</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statCol}>
+            <Text style={styles.statVal}>{scenarios.length}</Text>
+            <Text style={styles.statLabel}>Available</Text>
           </View>
         </View>
 
-        {/* Scenarios Grid */}
-        <View style={styles.grid}>
-          {scenarios.map((item) => (
-            <TouchableOpacity
-              key={item.key}
-              onPress={() =>
-                router.push({
-                  pathname: '/simulate/chat',
-                  params: { type: item.key }
-                })
-              }
-              style={styles.card}
-              activeOpacity={0.8}
-            >
-              <View style={styles.cardRow}>
-                <Text style={styles.cardIcon}>{item.icon}</Text>
-                
-                <View style={styles.cardMeta}>
-                  <Text style={styles.cardTitle}>{item.title}</Text>
-                  <View style={styles.badgeRow}>
-                    <Text style={[
-                      styles.difficultyBadge,
-                      item.difficulty === 'Beginner' ? styles.badgeBeginner : styles.badgeIntermediate
-                    ]}>
-                      {item.difficulty}
-                    </Text>
-                    <Text style={styles.rewardText}>🪙 +{item.points} XP</Text>
-                  </View>
+        {/* List of Scenarios */}
+        <Text style={styles.sectionTitle}>All Scenarios</Text>
+        <View style={styles.list}>
+          {scenarios.map((scene) => (
+            <View key={scene.key} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardIcon}>{scene.icon}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.cardTitle}>{scene.title}</Text>
                 </View>
-
-                <Ionicons name="chevron-forward" size={18} color="#94A3B8" />
               </View>
-            </TouchableOpacity>
+              
+              <View style={styles.metaRow}>
+                <View style={styles.badge}>
+                  <Ionicons name="flash-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                  <Text style={styles.badgeText}>{scene.difficulty}</Text>
+                </View>
+                <View style={styles.badge}>
+                  <Ionicons name="star-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                  <Text style={styles.badgeText}>+100 XP</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.startBtn}
+                onPress={() => router.push(`/simulate/chat?type=${scene.key}`)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.startBtnText}>Start Dialogue</Text>
+                <Ionicons name="arrow-forward" size={16} color="#FFF" />
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>
@@ -87,120 +81,130 @@ export default function SimulationIndex() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
+  },
+  header: {
+    marginBottom: 20,
   },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 4,
   },
   headerSubtitle: {
-    fontSize: 15,
+    fontSize: 16,
     color: '#475569',
-    marginBottom: 20,
-  },
+    },
   statsCard: {
     backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderRadius: 20,
     padding: 20,
-    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    flexDirection: 'row',
+    marginBottom: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+  },
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statVal: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#475569',
+    fontWeight: '600',
+    },
+  divider: {
+    width: 1,
+    backgroundColor: '#CBD5E1',
+    marginVertical: 4,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 16,
+  },
+  list: {
+    gap: 16,
+  },
+  card: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 16,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  statCol: {
-    alignItems: 'center',
-  },
-  statVal: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#0F172A',
-    },
-  statLabel: {
-    fontSize: 12,
-    color: '#475569',
-    marginTop: 4,
-    fontWeight: '600',
-    },
-  grid: {
-    gap: 12,
-  },
-  card: {
-    backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 10,
-    elevation: 1,
-  },
-  cardRow: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 14,
   },
   cardIcon: {
     fontSize: 28,
-    marginRight: 16,
-  },
-  cardMeta: {
-    flex: 1,
+    marginRight: 14,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 6,
+    marginBottom: 2,
   },
-  badgeRow: {
+  cardSubtitle: {
+    fontSize: 14,
+    color: '#475569',
+    },
+  metaRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 18,
+  },
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  difficultyBadge: {
-    fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    overflow: 'hidden',
-    },
-  badgeBeginner: {
     backgroundColor: '#F1F5F9',
-    color: '#475569',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
-  badgeIntermediate: {
-    backgroundColor: '#FAF5FF',
-    color: '#8B5CF6',
-    borderWidth: 1,
-    borderColor: '#E9D5FF',
-  },
-  rewardText: {
+  badgeText: {
     fontSize: 11,
-    color: '#475569',
     fontWeight: '600',
+    color: '#475569',
+    },
+  startBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2563EB',
+    paddingVertical: 12,
+    borderRadius: 14,
+    gap: 6,
+  },
+  startBtnText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '700',
     }
 });

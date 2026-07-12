@@ -17,14 +17,14 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? '#E2E8F0' : '#F8F9FA',
+    backgroundColor: Platform.OS === 'web' ? '#F1F5F9' : '#F8FAFC',
   },
   mobileFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
     ...Platform.select({
       web: {
         boxShadow: '0px 0px 20px rgba(0,0,0,0.05)' as any,

@@ -52,7 +52,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
         <ScrollView 
           contentContainerStyle={styles.container}
           showsVerticalScrollIndicator={false}
@@ -87,7 +87,9 @@ export default function HomeScreen() {
               style={styles.actionButton}
               onPress={() => router.push("/learn")}
             >
-              <Ionicons name="book-outline" size={24} color="#8B5CF6" style={styles.actionIcon} />
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="book-outline" size={22} color="#2563EB" />
+              </View>
               <Text style={styles.actionText}>Learn</Text>
             </TouchableOpacity>
 
@@ -95,7 +97,9 @@ export default function HomeScreen() {
               style={styles.actionButton}
               onPress={() => router.push("/simulate")}
             >
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color="#8B5CF6" style={styles.actionIcon} />
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="chatbubble-ellipses-outline" size={22} color="#2563EB" />
+              </View>
               <Text style={styles.actionText}>Simulate</Text>
             </TouchableOpacity>
 
@@ -103,14 +107,18 @@ export default function HomeScreen() {
               style={styles.actionButton}
               onPress={() => router.push("/learn/translator")}
             >
-              <Ionicons name="language-outline" size={24} color="#8B5CF6" style={styles.actionIcon} />
+              <View style={styles.actionIconContainer}>
+                <Ionicons name="language-outline" size={22} color="#2563EB" />
+              </View>
               <Text style={styles.actionText}>Translate</Text>
             </TouchableOpacity>
           </View>
 
           {/* AI Recommendation Banner */}
           <View style={styles.aiBanner}>
-            <Ionicons name="sparkles-outline" size={20} color="#8B5CF6" style={{ marginRight: 12 }} />
+            <View style={styles.aiIconWrapper}>
+              <Ionicons name="sparkles" size={18} color="#2563EB" />
+            </View>
             <View style={styles.aiContent}>
               <Text style={styles.aiTitle}>Smart Recommendation</Text>
               <Text style={styles.aiSubtitle}>{getRecommendation()}</Text>
@@ -172,7 +180,9 @@ export default function HomeScreen() {
             style={styles.pronunciationCard}
             onPress={() => router.push("/learn/pronunciation")}
           >
-            <Ionicons name="mic-outline" size={24} color="#8B5CF6" style={{ marginRight: 16 }} />
+            <View style={styles.micCircle}>
+              <Ionicons name="mic" size={20} color="#2563EB" />
+            </View>
             <View style={styles.pronunciationContent}>
               <Text style={styles.pronunciationTitle}>Practice your pronunciation</Text>
               <Text style={styles.pronunciationSubtitle}>
@@ -190,11 +200,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? '#E2E8F0' : '#F8F9FA', 
+    backgroundColor: Platform.OS === 'web' ? '#F1F5F9' : '#F8FAFC', 
   },
   container: {
     padding: 20,
-    paddingBottom: 100, 
+    paddingBottom: 110, 
   },
   headerContainer: {
     marginTop: 10,
@@ -219,18 +229,18 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 12,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   progressCircle: {
     width: 70,
     height: 70,
     borderRadius: 35,
     borderWidth: 4,
-    borderColor: '#8B5CF6',
+    borderColor: '#06B6D4',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 18,
@@ -272,8 +282,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     backgroundColor: '#FFF',
-    borderRadius: 20,
-    padding: 16,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 10,
     flex: 1, 
     alignItems: 'center',
     shadowColor: '#000',
@@ -282,7 +293,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+  },
+  actionIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   actionIcon: {
     marginBottom: 8,
@@ -294,10 +314,10 @@ const styles = StyleSheet.create({
     },
   aiBanner: {
     backgroundColor: '#FFF',
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderWidth: 1,
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 18,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 24,
@@ -305,6 +325,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
+  },
+  aiIconWrapper: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   aiContent: {
     flex: 1,
@@ -337,7 +366,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 1,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   goalRow: {
     flexDirection: 'row',
@@ -355,8 +384,8 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   checkboxCompleted: {
-    borderColor: '#8B5CF6',
-    backgroundColor: '#8B5CF6',
+    borderColor: '#10B981',
+    backgroundColor: '#10B981',
   },
   checkmark: {
     color: '#FFF',
@@ -391,7 +420,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 1,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   lessonContent: {
     flex: 1,
@@ -416,7 +445,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#06B6D4',
     borderRadius: 3,
   },
   lessonRight: {
@@ -437,7 +466,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 28,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
@@ -452,7 +481,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     marginRight: 16,
   },
   activityContent: {
@@ -480,7 +509,16 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 1,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+  },
+  micCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
   },
   pronunciationContent: {
     flex: 1,

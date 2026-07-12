@@ -43,7 +43,7 @@ export default function AchievementBadges() {
                 <Ionicons
                   name={iconMap[badge.icon] || 'trophy-outline'}
                   size={26}
-                  color={isUnlocked ? '#8B5CF6' : '#94A3B8'}
+                  color={isUnlocked ? '#FBBF24' : '#94A3B8'}
                 />
               </View>
               <Text
@@ -102,11 +102,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   lockedBadgeCard: {
     backgroundColor: '#FFF',
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     opacity: 0.65,
   },
   iconContainer: {
@@ -118,9 +118,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   unlockedIconContainer: {
-    backgroundColor: '#FAF5FF',
+    backgroundColor: 'rgba(251, 191, 36, 0.08)',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: 'rgba(251, 191, 36, 0.15)',
   },
   lockedIconContainer: {
     backgroundColor: '#F1F5F9',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   lockedTagText: {
     fontSize: 8,

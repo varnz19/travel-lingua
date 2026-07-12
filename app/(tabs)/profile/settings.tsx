@@ -35,7 +35,7 @@ export default function SettingsScreen() {
   const [localLang, setLocalLang] = useState(learningLanguage);
   const [localSpeed, setLocalSpeed] = useState(speechSpeed || 1.0);
   const [localTheme, setLocalTheme] = useState(theme || 'light');
-  const [localAccent, setLocalAccent] = useState(accentColor || '#8B5CF6');
+  const [localAccent, setLocalAccent] = useState(accentColor || '#2563EB');
   const [localNotif, setLocalNotif] = useState(notificationsEnabled !== undefined ? notificationsEnabled : true);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -47,7 +47,7 @@ export default function SettingsScreen() {
     { name: 'Italian', flag: '🇮🇹' }
   ];
 
-  const accents = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+  const accents = ['#2563EB', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
   const speeds = [0.5, 0.75, 1.0, 1.25, 1.5];
 
   const handleSave = () => {
@@ -184,7 +184,7 @@ export default function SettingsScreen() {
                   key={speed}
                   style={[
                     styles.speedBtn,
-                    localSpeed === speed && { backgroundColor: '#8B5CF6' }
+                    localSpeed === speed && { backgroundColor: '#2563EB' }
                   ]}
                   onPress={() => setLocalSpeed(speed)}
                 >
@@ -202,7 +202,7 @@ export default function SettingsScreen() {
             <View style={styles.toggleRow}>
               <Text style={styles.label}>Enable Reminders</Text>
               <TouchableOpacity 
-                style={[styles.toggleSwitch, localNotif ? { backgroundColor: '#8B5CF6' } : { backgroundColor: '#E2E8F0' }]}
+                style={[styles.toggleSwitch, localNotif ? { backgroundColor: '#2563EB' } : { backgroundColor: '#E2E8F0' }]}
                 onPress={() => setLocalNotif(!localNotif)}
               >
                 <View style={[styles.toggleThumb, localNotif ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]} />
@@ -219,7 +219,7 @@ export default function SettingsScreen() {
                     key={lang.name}
                     style={[
                       styles.languageCard,
-                      isSelected && { borderColor: '#8B5CF6', backgroundColor: '#FFF', borderWidth: 1.5 }
+                      isSelected && { borderColor: '#2563EB', backgroundColor: '#FFF', borderWidth: 1.5 }
                     ]}
                     onPress={() => setLocalLang(lang.name)}
                     activeOpacity={0.8}
@@ -228,7 +228,7 @@ export default function SettingsScreen() {
                     <Text
                       style={[
                         styles.languageLabel,
-                        isSelected && { color: '#8B5CF6', fontWeight: 'bold' }
+                        isSelected && { color: '#2563EB', fontWeight: 'bold' }
                       ]}
                     >
                       {lang.name}
@@ -264,11 +264,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   header: {
     flexDirection: 'row',
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   headerTitle: {
     fontSize: 18,
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderRadius: 14,
     paddingHorizontal: 12,
   },
@@ -366,12 +366,12 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   speedBtn: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   speedText: {
     fontSize: 12,
@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderRadius: 12,
     width: '48%',
     paddingHorizontal: 12,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     color: '#475569',
     },
   saveButton: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',

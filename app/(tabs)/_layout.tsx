@@ -36,7 +36,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
           if (route.name === 'simulate') iconName = "chatbubble-ellipses-outline";
           if (route.name === 'profile') iconName = "person-outline";
 
-          const activeColor = '#8B5CF6';
+          const activeColor = '#2563EB';
           const inactiveColor = '#94A3B8';
 
           return (
@@ -47,7 +47,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
               accessibilityLabel={options.tabBarAccessibilityLabel}
               testID={options.tabBarTestID}
               onPress={onPress}
-              style={styles.navItem}
+              style={[
+                styles.navItem,
+                isFocused && styles.navItemActive
+              ]}
               activeOpacity={0.7}
             >
               <Ionicons 
@@ -115,20 +118,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#FFF',
-    paddingVertical: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     elevation: 4,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+  },
+  navItemActive: {
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
   },
   navLabel: {
     fontSize: 11,
@@ -138,6 +148,6 @@ const styles = StyleSheet.create({
   navLabelActive: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: '#2563EB',
     },
 }) as any;

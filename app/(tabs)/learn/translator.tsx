@@ -70,7 +70,7 @@ export default function TranslatorScreen() {
         <View style={styles.selectorBar}>
           <Text style={styles.langText}>{source}</Text>
           <TouchableOpacity onPress={handleSwap} style={styles.swapBtn} activeOpacity={0.7}>
-            <Ionicons name="swap-horizontal" size={20} color="#0F172A" />
+            <Ionicons name="swap-horizontal" size={20} color="#2563EB" />
           </TouchableOpacity>
           <Text style={styles.langText}>{target}</Text>
         </View>
@@ -99,13 +99,13 @@ export default function TranslatorScreen() {
 
             <View style={styles.actionsRow}>
               <TouchableOpacity style={styles.actionIcon} onPress={handleTTS}>
-                <Ionicons name="volume-high-outline" size={22} color="#8B5CF6" />
+                <Ionicons name="volume-high-outline" size={22} color="#2563EB" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionIcon} onPress={handleCopy}>
-                <Ionicons name="copy-outline" size={22} color="#8B5CF6" />
+                <Ionicons name="copy-outline" size={22} color="#2563EB" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.actionIcon} onPress={handleSave}>
-                <Ionicons name="star-outline" size={22} color="#F59E0B" />
+                <Ionicons name="star-outline" size={22} color="#FBBF24" />
               </TouchableOpacity>
             </View>
           </View>
@@ -132,14 +132,14 @@ export default function TranslatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   backBtn: {
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   selectorBar: {
     flexDirection: 'row',
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 20,
     gap: 20,
     shadowColor: '#000',
@@ -180,14 +180,14 @@ const styles = StyleSheet.create({
   swapBtn: {
     padding: 6,
     borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
   },
   card: {
     backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   translateBtn: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -214,13 +214,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     },
   outputCard: {
-    borderColor: '#D8B4FE',
+    borderColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   outputTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#2563EB',
     textTransform: 'uppercase',
     marginBottom: 8,
     },
@@ -233,14 +233,14 @@ const styles = StyleSheet.create({
   pronText: {
     fontSize: 13,
     fontStyle: 'italic',
-    color: '#64748B',
+    color: '#475569',
     marginBottom: 14,
   },
   actionsRow: {
     flexDirection: 'row',
     gap: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: '#CBD5E1',
     paddingTop: 14,
   },
   actionIcon: {
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },

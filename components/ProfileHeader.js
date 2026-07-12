@@ -48,7 +48,7 @@ export default function ProfileHeader() {
         onPress={() => router.push('/profile/settings')}
         activeOpacity={0.7}
       >
-        <Ionicons name="settings-outline" size={22} color="#8B5CF6" />
+        <Ionicons name="settings-outline" size={22} color="#2563EB" />
       </TouchableOpacity>
     </View>
   );
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 15,
@@ -110,13 +110,13 @@ const styles = StyleSheet.create({
   languageBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF5FF',
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: 'rgba(37, 99, 235, 0.15)',
   },
   languageFlag: {
     fontSize: 14,
@@ -124,18 +124,18 @@ const styles = StyleSheet.create({
   },
   languageText: {
     fontSize: 12,
-    color: '#8B5CF6',
+    color: '#2563EB',
     fontWeight: 'bold',
     },
   settingsButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FAF5FF',
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: 'rgba(37, 99, 235, 0.15)',
   },
 });

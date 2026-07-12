@@ -277,13 +277,15 @@ export default function FlashcardsScreen() {
                   <Ionicons 
                     name={starred[currentPhrase.id] ? "star" : "star-outline"} 
                     size={22} 
-                    color={starred[currentPhrase.id] ? "#F59E0B" : "#475569"} 
+                    color={starred[currentPhrase.id] ? "#FBBF24" : "#94A3B8"} 
                   />
                   <Text style={styles.toolbarText}>Favorite</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity style={styles.toolbarBtn} onPress={handleTTS}>
-                  <Ionicons name="volume-high-outline" size={22} color="#8B5CF6" />
+                  <View style={styles.listenIconBg}>
+                    <Ionicons name="volume-high-outline" size={22} color="#2563EB" />
+                  </View>
                   <Text style={styles.toolbarText}>Listen</Text>
                 </TouchableOpacity>
 
@@ -291,7 +293,7 @@ export default function FlashcardsScreen() {
                   <Ionicons 
                     name={learned[currentPhrase.id] ? "checkmark-circle" : "checkmark-circle-outline"} 
                     size={22} 
-                    color={learned[currentPhrase.id] ? "#10B981" : "#475569"} 
+                    color={learned[currentPhrase.id] ? "#10B981" : "#94A3B8"} 
                   />
                   <Text style={styles.toolbarText}>Learned</Text>
                 </TouchableOpacity>
@@ -326,7 +328,7 @@ export default function FlashcardsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
@@ -334,7 +336,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   backButton: {
@@ -352,11 +354,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#F1F5F9',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   quizToggleBtnActive: {
-    backgroundColor: '#8B5CF6',
-    borderColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
   },
   quizToggleText: {
     fontSize: 12,
@@ -381,13 +383,13 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     alignItems: 'center',
-    paddingBottom: 100,
+    paddingBottom: 110,
     width: '100%',
   },
   progressText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#8B5CF6',
+    color: '#2563EB',
     marginBottom: 20,
   },
   cardContainer: {
@@ -401,21 +403,21 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     aspectRatio: 3 / 4.2,
     backgroundColor: '#FFF',
-    borderRadius: 24,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
     elevation: 3,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   cardFlipped: {
-    backgroundColor: '#FAF5FF',
-    borderColor: '#D8B4FE',
+    backgroundColor: '#FFF',
+    borderColor: '#2563EB',
   },
   cardContent: {
     flex: 1,
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
   phraseBack: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#7C3AED',
+    color: '#2563EB',
     textAlign: 'center',
     marginBottom: 16,
     },
@@ -448,7 +450,7 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: '#CBD5E1',
     borderRadius: 14,
     padding: 12,
     marginTop: 10,
@@ -456,7 +458,7 @@ const styles = StyleSheet.create({
   exampleHeader: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#2563EB',
     textTransform: 'uppercase',
     marginBottom: 4,
     },
@@ -488,11 +490,21 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
   },
   toolbarBtn: {
     alignItems: 'center',
     gap: 4,
+  },
+  listenIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
   },
   toolbarText: {
     fontSize: 11,
@@ -510,7 +522,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
@@ -525,7 +537,7 @@ const styles = StyleSheet.create({
     },
   controlBtnPrimary: {
     flex: 1.2,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
@@ -544,7 +556,7 @@ const styles = StyleSheet.create({
   },
   questionCard: {
     backgroundColor: '#FFF',
-    borderRadius: 24,
+    borderRadius: 20,
     padding: 24,
     width: '100%',
     maxWidth: 340,
@@ -552,16 +564,16 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   questionLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#2563EB',
     textTransform: 'uppercase',
     marginBottom: 8,
     },
@@ -586,7 +598,7 @@ const styles = StyleSheet.create({
   optionBtn: {
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
@@ -620,7 +632,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     borderRadius: 14,
     gap: 6,
@@ -635,7 +647,7 @@ const styles = StyleSheet.create({
   summaryContainer: {
     padding: 30,
     alignItems: 'center',
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   summaryTitle: {
     fontSize: 24,
@@ -648,7 +660,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 6,
-    borderColor: '#8B5CF6',
+    borderColor: '#2563EB',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -657,7 +669,7 @@ const styles = StyleSheet.create({
   scoreText: {
     fontSize: 24,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#2563EB',
     },
   pointsText: {
     fontSize: 14,
@@ -678,7 +690,7 @@ const styles = StyleSheet.create({
   reviewCard: {
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderRadius: 16,
     padding: 16,
     marginBottom: 10,
@@ -706,7 +718,7 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   actionBtn: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 14,

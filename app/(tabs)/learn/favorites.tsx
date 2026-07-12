@@ -73,10 +73,10 @@ export default function FavoritesScreen() {
 
                 <View style={styles.phraseActions}>
                   <TouchableOpacity onPress={() => handleTTS(item.phrase, item.language)} style={styles.actionBtn}>
-                    <Ionicons name="volume-high-outline" size={20} color="#8B5CF6" />
+                    <Ionicons name="volume-high-outline" size={20} color="#2563EB" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => handleCopy(item.phrase)} style={styles.actionBtn}>
-                    <Ionicons name="copy-outline" size={18} color="#8B5CF6" />
+                    <Ionicons name="copy-outline" size={18} color="#2563EB" />
                   </TouchableOpacity>
                   <TouchableOpacity onPress={() => deleteSavedPhrase(item.id)} style={styles.actionBtn}>
                     <Ionicons name="trash-outline" size={18} color="#EF4444" />
@@ -100,14 +100,14 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   backBtn: {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#FFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
   },
   tab: {
     flex: 1,
@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabActive: {
-    borderBottomColor: '#8B5CF6',
+    borderBottomColor: '#2563EB',
   },
   tabText: {
     fontSize: 13,
@@ -145,14 +145,14 @@ const styles = StyleSheet.create({
   },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   phraseCard: {
     backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
@@ -181,15 +181,15 @@ const styles = StyleSheet.create({
   phraseBadge: {
     fontSize: 11,
     fontWeight: '700',
-    backgroundColor: '#FAF5FF',
-    color: '#8B5CF6',
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    color: '#2563EB',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: 'rgba(37, 99, 235, 0.15)',
   },
   phraseActions: {
     alignItems: 'center',

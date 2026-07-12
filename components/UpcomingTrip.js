@@ -21,7 +21,7 @@ export default function UpcomingTrip() {
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.iconContainer}>
-          <Ionicons name={trip.icon} size={22} color="#8B5CF6" />
+          <Ionicons name={trip.icon} size={22} color="#2563EB" />
         </View>
         <View style={styles.headerTextContainer}>
           <Text style={styles.label}>UPCOMING TRIP</Text>
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
@@ -75,13 +75,13 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: '#FAF5FF',
+    borderRadius: 21,
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#E9D5FF',
+    borderColor: 'rgba(37, 99, 235, 0.15)',
   },
   headerTextContainer: {
     flex: 1,
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#8B5CF6',
+    color: '#2563EB',
     letterSpacing: 1,
     marginBottom: 2,
     },
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
   badgeText: {
     fontSize: 11,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     },
   divider: {
     height: 1,
-    backgroundColor: '#E2E8F0',
+    backgroundColor: '#CBD5E1',
     marginVertical: 15,
   },
   tripFooter: {
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#06B6D4',
     borderRadius: 4,
   },
 });

@@ -84,14 +84,14 @@ export default function StatisticsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   backBtn: {
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   sectionTitle: {
     fontSize: 22,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   barFill: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     borderRadius: 7,
     width: '100%',
   },
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,

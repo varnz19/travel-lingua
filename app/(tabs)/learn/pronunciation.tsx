@@ -133,14 +133,14 @@ export default function PronunciationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: '#CBD5E1',
     backgroundColor: '#FFF',
   },
   backBtn: {
@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
     },
   scroll: {
     padding: 20,
-    paddingBottom: 100,
+    paddingBottom: 110,
     alignItems: 'center',
   },
   stepText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#2563EB',
     letterSpacing: 1.5,
     marginBottom: 12,
     },
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   listenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     borderRadius: 14,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -215,10 +215,10 @@ const styles = StyleSheet.create({
     width: 70,
     height: 70,
     borderRadius: 35,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#8B5CF6',
+    shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 8,
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   waveBar: {
     width: 6,
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     borderRadius: 3,
   },
   hintText: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     },
   scoreCard: {
     backgroundColor: '#FFF',
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderWidth: 1,
     borderRadius: 20,
     padding: 20,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   nextBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#2563EB',
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 10,

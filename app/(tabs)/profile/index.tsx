@@ -16,7 +16,7 @@ export default function DashboardScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#8B5CF6" />
+        <ActivityIndicator size="large" color="#2563EB" />
         <Text style={styles.loadingText}>Loading Profile...</Text>
       </View>
     );
@@ -80,17 +80,17 @@ export default function DashboardScreen() {
 const styles: any = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA', 
+    backgroundColor: '#F8FAFC', 
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F8FAFC',
   },
   loadingText: {
     marginTop: 12,
@@ -103,11 +103,11 @@ const styles: any = StyleSheet.create({
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
@@ -129,8 +129,8 @@ const styles: any = StyleSheet.create({
     fontWeight: '600',
     },
   coinCol: {
-    backgroundColor: '#F8F9FA',
-    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
     borderWidth: 1,
     borderRadius: 12,
     paddingHorizontal: 12,
@@ -149,7 +149,7 @@ const styles: any = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#06B6D4',
     borderRadius: 4,
   },
   utilitiesRow: {
@@ -161,7 +161,7 @@ const styles: any = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
     borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
@@ -174,6 +174,6 @@ const styles: any = StyleSheet.create({
   utilityBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#2563EB',
     }
 });
