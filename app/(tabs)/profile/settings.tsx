@@ -13,20 +13,32 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../../../context/ProfileContext';
-
 import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
-  const { profile, updateProfile } = useContext(ProfileContext);
+  const {
+    username,
+    password,
+    learningLanguage,
+    speechSpeed,
+    theme,
+    accentColor,
+    notificationsEnabled,
+    updateProfile,
+    resetProgress
+  } = useContext(ProfileContext);
+
   const router = useRouter();
 
-  // Local state for form fields
-  const [username, setUsername] = useState(profile.username);
-  const [password, setPassword] = useState(profile.password);
-  const [learningLanguage, setLearningLanguage] = useState(profile.learningLanguage);
+  const [localUsername, setLocalUsername] = useState(username);
+  const [localPassword, setLocalPassword] = useState(password);
+  const [localLang, setLocalLang] = useState(learningLanguage);
+  const [localSpeed, setLocalSpeed] = useState(speechSpeed || 1.0);
+  const [localTheme, setLocalTheme] = useState(theme || 'light');
+  const [localAccent, setLocalAccent] = useState(accentColor || '#8B5CF6');
+  const [localNotif, setLocalNotif] = useState(notificationsEnabled !== undefined ? notificationsEnabled : true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Available languages list with icons
   const languages = [
     { name: 'Spanish', flag: '🇪🇸' },
     { name: 'French', flag: '🇫🇷' },
@@ -35,26 +47,48 @@ export default function SettingsScreen() {
     { name: 'Italian', flag: '🇮🇹' }
   ];
 
+  const accents = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+  const speeds = [0.5, 0.75, 1.0, 1.25, 1.5];
+
   const handleSave = () => {
-    if (!username.trim()) {
-      Alert.alert('Required Field', 'Username cannot be empty.');
-      return;
-    }
-    if (!password.trim()) {
-      Alert.alert('Required Field', 'Password cannot be empty.');
+    if (!localUsername.trim() || !localPassword.trim()) {
+      Alert.alert('Required', 'Username and Password cannot be empty.');
       return;
     }
 
     updateProfile({
-      username: username.trim(),
-      password: password.trim(),
-      learningLanguage
+      username: localUsername.trim(),
+      password: localPassword.trim(),
+      learningLanguage: localLang,
+      speechSpeed: localSpeed,
+      theme: localTheme,
+      accentColor: localAccent,
+      notificationsEnabled: localNotif
     });
 
     Alert.alert(
       'Settings Saved',
-      'Your profile changes have been updated in real-time!',
+      'Your preferences have been successfully updated!',
       [{ text: 'OK', onPress: () => router.back() }]
+    );
+  };
+
+  const handleReset = () => {
+    Alert.alert(
+      'Reset Progress?',
+      'This will erase all achievements, XP, levels, and saved phrases.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Reset Everything', 
+          style: 'destructive',
+          onPress: () => {
+            resetProgress();
+            Alert.alert("Reset Complete", "All data has been cleared.");
+            router.replace('/');
+          }
+        }
+      ]
     );
   };
 
@@ -68,48 +102,48 @@ export default function SettingsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Back button and header */}
+          {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
               activeOpacity={0.7}
             >
-              <Ionicons name="arrow-back" size={24} color="#333333" />
+              <Ionicons name="arrow-back" size={24} color="#0F172A" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Profile Settings</Text>
-            <View style={{ width: 40 }} /> {/* spacer to center title */}
+            <Text style={styles.headerTitle}>Settings</Text>
+            <View style={{ width: 40 }} />
           </View>
 
           {/* Form */}
           <View style={styles.formContainer}>
-            <Text style={styles.sectionHeader}>Edit Profile Info</Text>
+            <Text style={styles.sectionHeader}>Account Information</Text>
 
-            {/* Username Input */}
+            {/* Username */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color="#7b4eff" style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter username"
-                  value={username}
-                  onChangeText={setUsername}
+                  value={localUsername}
+                  onChangeText={setLocalUsername}
                   autoCapitalize="words"
                 />
               </View>
             </View>
 
-            {/* Password Input */}
+            {/* Password */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="lock-closed-outline" size={20} color="#7b4eff" style={styles.inputIcon} />
+                <Ionicons name="lock-closed-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, { flex: 1 }]}
                   placeholder="Enter password"
-                  value={password}
-                  onChangeText={setPassword}
+                  value={localPassword}
+                  onChangeText={setLocalPassword}
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
@@ -120,54 +154,105 @@ export default function SettingsScreen() {
                   <Ionicons
                     name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                     size={20}
-                    color="#888888"
+                    color="#94A3B8"
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Language Selection */}
-            <Text style={[styles.label, { marginTop: 10, marginBottom: 8 }]}>Select Learning Language</Text>
+            {/* Accent Color */}
+            <Text style={styles.label}>Accent Color</Text>
+            <View style={styles.accentContainer}>
+              {accents.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.accentCircle,
+                    { backgroundColor: color },
+                    localAccent === color && styles.accentCircleSelected
+                  ]}
+                  onPress={() => setLocalAccent(color)}
+                />
+              ))}
+            </View>
+
+            {/* Speeds */}
+            <Text style={styles.label}>Voice Playback Speed</Text>
+            <View style={styles.speedRow}>
+              {speeds.map((speed) => (
+                <TouchableOpacity
+                  key={speed}
+                  style={[
+                    styles.speedBtn,
+                    localSpeed === speed && { backgroundColor: '#8B5CF6' }
+                  ]}
+                  onPress={() => setLocalSpeed(speed)}
+                >
+                  <Text style={[
+                    styles.speedText,
+                    localSpeed === speed && { color: '#FFF', fontWeight: 'bold' }
+                  ]}>
+                    {speed}x
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Daily Toggles */}
+            <View style={styles.toggleRow}>
+              <Text style={styles.label}>Enable Reminders</Text>
+              <TouchableOpacity 
+                style={[styles.toggleSwitch, localNotif ? { backgroundColor: '#8B5CF6' } : { backgroundColor: '#E2E8F0' }]}
+                onPress={() => setLocalNotif(!localNotif)}
+              >
+                <View style={[styles.toggleThumb, localNotif ? { alignSelf: 'flex-end' } : { alignSelf: 'flex-start' }]} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Learning Language */}
+            <Text style={[styles.label, { marginTop: 10, marginBottom: 8 }]}>Learning Language</Text>
             <View style={styles.languageContainer}>
               {languages.map((lang) => {
-                const isSelected = learningLanguage === lang.name;
+                const isSelected = localLang === lang.name;
                 return (
                   <TouchableOpacity
                     key={lang.name}
                     style={[
                       styles.languageCard,
-                      isSelected && styles.languageCardSelected
+                      isSelected && { borderColor: '#8B5CF6', backgroundColor: '#FFF', borderWidth: 1.5 }
                     ]}
-                    onPress={() => setLearningLanguage(lang.name)}
+                    onPress={() => setLocalLang(lang.name)}
                     activeOpacity={0.8}
                   >
                     <Text style={styles.languageFlag}>{lang.flag}</Text>
                     <Text
                       style={[
                         styles.languageLabel,
-                        isSelected && styles.languageLabelSelected
+                        isSelected && { color: '#8B5CF6', fontWeight: 'bold' }
                       ]}
                     >
                       {lang.name}
                     </Text>
-                    {isSelected && (
-                      <View style={styles.checkmark}>
-                        <Ionicons name="checkmark-circle" size={16} color="#7b4eff" />
-                      </View>
-                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Save Button */}
+            {/* Action Buttons */}
             <TouchableOpacity
               style={styles.saveButton}
               onPress={handleSave}
               activeOpacity={0.85}
             >
-              <Ionicons name="save-outline" size={20} color="#ffffff" style={{ marginRight: 8 }} />
               <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.resetButton}
+              onPress={handleReset}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.resetButtonText}>Reset Progress</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -179,11 +264,11 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9ff',
+    backgroundColor: '#F8F9FA',
   },
   scrollContent: {
     padding: 16,
-    paddingBottom: 32,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
@@ -198,49 +283,53 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333333',
-  },
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    },
   formContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
-    shadowColor: '#000000',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
   },
   sectionHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 18,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#333333',
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9fc',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#e2e2e9',
-    borderRadius: 12,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
     paddingHorizontal: 12,
   },
   inputIcon: {
@@ -250,10 +339,63 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 14,
-    color: '#333333',
-  },
+    color: '#0F172A',
+    },
   eyeIcon: {
     padding: 4,
+  },
+  accentContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 18,
+  },
+  accentCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  accentCircleSelected: {
+    borderColor: '#0F172A',
+    borderWidth: 3,
+  },
+  speedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 18,
+  },
+  speedBtn: {
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  speedText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  toggleSwitch: {
+    width: 48,
+    height: 26,
+    borderRadius: 13,
+    padding: 3,
+    justifyContent: 'center',
+  },
+  toggleThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFF',
   },
   languageContainer: {
     flexDirection: 'row',
@@ -265,19 +407,13 @@ const styles = StyleSheet.create({
   languageCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9f9fc',
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#e2e2e9',
+    borderColor: '#E2E8F0',
     borderRadius: 12,
-    width: '48%', // two per row
+    width: '48%',
     paddingHorizontal: 12,
     paddingVertical: 12,
-    position: 'relative',
-  },
-  languageCardSelected: {
-    backgroundColor: '#f1ecff',
-    borderColor: '#7b4eff',
-    borderWidth: 1.5,
   },
   languageFlag: {
     fontSize: 20,
@@ -286,33 +422,32 @@ const styles = StyleSheet.create({
   languageLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#555555',
-  },
-  languageLabelSelected: {
-    color: '#7b4eff',
-    fontWeight: 'bold',
-  },
-  checkmark: {
-    position: 'absolute',
-    right: 8,
-    top: 12,
-  },
+    color: '#475569',
+    },
   saveButton: {
-    backgroundColor: '#7b4eff',
-    flexDirection: 'row',
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    shadowColor: '#7b4eff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 12,
   },
   saveButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '700',
+    },
+  resetButton: {
+    borderColor: '#EF4444',
+    borderWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  resetButtonText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '700',
+    }
 });

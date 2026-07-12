@@ -4,30 +4,27 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../context/ProfileContext';
 
 export default function UpcomingTrip() {
-  const { profile } = useContext(ProfileContext);
+  const { learningLanguage } = useContext(ProfileContext);
 
-  // Dynamic trip destination mapping based on learning language
   const tripDetails = {
-    Spanish: { destination: 'Madrid, Spain', date: 'Oct 15, 2026', daysLeft: 97, icon: 'airplane' },
-    French: { destination: 'Paris, France', date: 'Dec 02, 2026', daysLeft: 145, icon: 'airplane' },
-    Japanese: { destination: 'Tokyo, Japan', date: 'Nov 10, 2026', daysLeft: 123, icon: 'airplane' },
-    German: { destination: 'Berlin, Germany', date: 'Sep 30, 2026', daysLeft: 82, icon: 'airplane' },
-    Italian: { destination: 'Rome, Italy', date: 'Sep 05, 2026', daysLeft: 57, icon: 'airplane' }
+    Spanish: { destination: 'Madrid, Spain', date: 'Oct 15, 2026', daysLeft: 97, icon: 'airplane-outline' },
+    French: { destination: 'Paris, France', date: 'Dec 02, 2026', daysLeft: 145, icon: 'airplane-outline' },
+    Japanese: { destination: 'Tokyo, Japan', date: 'Nov 10, 2026', daysLeft: 123, icon: 'airplane-outline' },
+    German: { destination: 'Berlin, Germany', date: 'Sep 30, 2026', daysLeft: 82, icon: 'airplane-outline' },
+    Italian: { destination: 'Rome, Italy', date: 'Sep 05, 2026', daysLeft: 57, icon: 'airplane-outline' }
   };
 
-  const trip = tripDetails[profile.learningLanguage] || tripDetails['Spanish'];
-
-  // Vocabulary prep percentage (mock progress but related to saved phrases size)
-  const progress = Math.min(100, Math.round(50 + (2.5 * 10))); // mock progress but feels realistic
+  const trip = tripDetails[learningLanguage] || tripDetails['Spanish'];
+  const progress = Math.min(100, Math.round(50 + (2.5 * 10)));
 
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <View style={styles.iconContainer}>
-          <Ionicons name={trip.icon} size={22} color="#ffffff" />
+          <Ionicons name={trip.icon} size={22} color="#8B5CF6" />
         </View>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.label}>UPCOMING ADVENTURE</Text>
+          <Text style={styles.label}>UPCOMING TRIP</Text>
           <Text style={styles.destination}>{trip.destination}</Text>
         </View>
         <View style={styles.badge}>
@@ -59,11 +56,13 @@ export default function UpcomingTrip() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFF',
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    shadowColor: '#000000',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -77,10 +76,12 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#7b4eff',
+    backgroundColor: '#FAF5FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
   headerTextContainer: {
     flex: 1,
@@ -88,31 +89,31 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: '#7b4eff',
+    color: '#8B5CF6',
     letterSpacing: 1,
     marginBottom: 2,
-  },
+    },
   destination: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
-  },
+    color: '#0F172A',
+    },
   badge: {
-    backgroundColor: '#fff1f0',
+    backgroundColor: '#FFF',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ffa39e',
+    borderColor: '#E2E8F0',
   },
   badgeText: {
     fontSize: 11,
-    color: '#f5222d',
+    color: '#475569',
     fontWeight: 'bold',
-  },
+    },
   divider: {
     height: 1,
-    backgroundColor: '#f0f2f5',
+    backgroundColor: '#E2E8F0',
     marginVertical: 15,
   },
   tripFooter: {
@@ -125,13 +126,13 @@ const styles = StyleSheet.create({
   },
   footerLabel: {
     fontSize: 13,
-    color: '#777777',
-  },
+    color: '#475569',
+    },
   footerValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333333',
-  },
+    color: '#0F172A',
+    },
   progressContainer: {
     marginTop: 4,
   },
@@ -142,22 +143,22 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 13,
-    color: '#777777',
-  },
+    color: '#475569',
+    },
   progressValue: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#7b4eff',
-  },
+    color: '#0F172A',
+    },
   progressBarBg: {
     height: 8,
-    backgroundColor: '#f1ecff',
+    backgroundColor: '#F1F5F9',
     borderRadius: 4,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#7b4eff',
+    backgroundColor: '#8B5CF6',
     borderRadius: 4,
   },
 });

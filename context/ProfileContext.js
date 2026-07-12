@@ -4,201 +4,363 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export const ProfileContext = createContext();
 
 const STORAGE_KEYS = {
-  PROFILE: '@lang_app_profile',
-  STATS: '@lang_app_stats',
-  PHRASES: '@lang_app_phrases',
-  ACHIEVEMENTS: '@lang_app_achievements'
+  STATE: '@lang_app_global_state'
 };
 
-const DEFAULT_PROFILE = {
+const DEFAULT_STATE = {
+  // Profile & Preferences
   username: 'Sarah Jenkins',
   password: 'password123',
-  learningLanguage: 'Spanish'
-};
+  learningLanguage: 'Japanese',
+  speechSpeed: 1.0,
+  voiceGender: 'female',
+  theme: 'light',
+  accentColor: '#8B5CF6',
+  notificationsEnabled: true,
 
-const DEFAULT_STATS = {
-  studyTime: '12.5h',
-  phrasesLearned: 3,
-  streak: 14,
-  scenarios: 8
-};
+  // Trip Planner
+  trip: {
+    destination: 'Tokyo, Japan',
+    departureDate: '2026-11-10',
+    duration: '14 days',
+    purpose: 'Tourism'
+  },
 
-const DEFAULT_PHRASES = {
-  Spanish: [
-    { id: '1', phrase: '¡Hola! ¿Cómo estás?', translation: 'Hello! How are you?', language: 'es' },
-    { id: '2', phrase: 'Buenos días, mi amigo.', translation: 'Good morning, my friend.', language: 'es' },
-    { id: '3', phrase: 'Una mesa para dos, por favor.', translation: 'A table for two, please.', language: 'es' }
+  // Gamification & Progress
+  xp: 120,
+  level: 1,
+  coins: 50,
+  streak: 7,
+  weeklyStreak: [true, true, true, true, true, false, false], // Mon-Sun
+  lessonsCompleted: 3,
+  simulationsCompleted: 1,
+  flashcardsLearned: 5,
+  pronunciationPractices: 2,
+
+  // Checklist of Daily Goals
+  dailyGoals: [
+    { id: 'dg1', label: 'Learn 5 phrases', completed: false, type: 'phrases', target: 5, current: 0 },
+    { id: 'dg2', label: 'Complete one simulation', completed: false, type: 'simulation' },
+    { id: 'dg3', label: 'Practice pronunciation', completed: false, type: 'pronunciation' },
+    { id: 'dg4', label: 'Review flashcards', completed: false, type: 'flashcards' }
   ],
-  French: [
-    { id: '1', phrase: 'Bonjour! Comment ça va?', translation: 'Hello! How is it going?', language: 'fr' },
-    { id: '2', phrase: 'Enchanté de vous rencontrer.', translation: 'Nice to meet you.', language: 'fr' },
-    { id: '3', phrase: 'Une table pour deux, s’il vous plaît.', translation: 'A table for two, please.', language: 'fr' }
+
+  // History & Lists
+  savedPhrases: [
+    { id: 'sp1', phrase: "Konnichiwa (こんにちは)", translation: "Hello / Good afternoon", language: "Japanese", pronunciation: "kohn-nee-chee-wah" },
+    { id: 'sp2', phrase: "Mizu o kudasai (水をください)", translation: "Water, please", language: "Japanese", pronunciation: "mee-zoo oh koo-dah-sah-ee" }
   ],
-  Japanese: [
-    { id: '1', phrase: 'こんにちは！お元気ですか？', translation: 'Hello! How are you?', language: 'ja' },
-    { id: '2', phrase: 'はじめまして。', translation: 'Nice to meet you.', language: 'ja' },
-    { id: '3', phrase: '二人用のテーブルをお願いします。', translation: 'A table for two, please.', language: 'ja' }
+  favoriteFlashcards: [],
+  translationHistory: [
+    { id: 'th1', sourceText: "Where is the station?", translatedText: "駅はどこですか？ (Eki wa doko desu ka?)", language: "Japanese" }
   ],
-  German: [
-    { id: '1', phrase: 'Hallo! Wie geht es dir?', translation: 'Hello! How are you?', language: 'de' },
-    { id: '2', phrase: 'Schön, Sie kennenzulernen.', translation: 'Nice to meet you.', language: 'de' },
-    { id: '3', phrase: 'Einen Tisch für zwei, bitte.', translation: 'A table for two, please.', language: 'de' }
+  recentActivity: [
+    { id: 'ra1', type: 'lesson', title: 'Completed Basic Greetings', time: '2 hours ago' },
+    { id: 'ra2', type: 'simulation', title: 'Finished Taxi Order', time: 'Yesterday' }
   ],
-  Italian: [
-    { id: '1', phrase: 'Ciao! Come stai?', translation: 'Hello! How are you?', language: 'it' },
-    { id: '2', phrase: 'Piacere di conoscerti.', translation: 'Nice to meet you.', language: 'it' },
-    { id: '3', phrase: 'Un tavolo per due, per favore.', translation: 'A table for two, please.', language: 'it' }
+  notifications: [
+    { id: 'n1', title: 'Time to practice!', message: 'Keep your 7-day streak alive!', read: false, time: '1 hour ago' },
+    { id: 'n2', title: 'New Achievement Unlocked', message: 'You earned the "First Steps" badge!', read: true, time: 'Yesterday' }
+  ],
+
+  // Achievements
+  achievements: [
+    { id: 'ach1', title: 'First Steps', description: 'Start learning your first phrases', icon: 'footsteps', unlocked: true, progress: 100 },
+    { id: 'ach2', title: 'Streak Master', description: 'Maintain a 7-day study streak', icon: 'flame', unlocked: true, progress: 100 },
+    { id: 'ach3', title: 'Polyglot Guru', description: 'Try switching languages', icon: 'globe', unlocked: false, progress: 0 },
+    { id: 'ach4', title: 'Word Wizard', description: 'Save more than 5 custom phrases', icon: 'book', unlocked: false, progress: 40 },
+    { id: 'ach5', title: 'Quiz Master', description: 'Score a perfect 100% on a quiz', icon: 'trophy', unlocked: false, progress: 0 },
+    { id: 'ach6', title: 'Restaurant Expert', description: 'Complete the Restaurant Simulation', icon: 'restaurant', unlocked: false, progress: 0 },
+    { id: 'ach7', title: 'Language Explorer', description: 'Explore phrases in 3 different categories', icon: 'compass', unlocked: false, progress: 33 }
   ]
 };
 
-const DEFAULT_ACHIEVEMENTS = [
-  { id: '1', title: 'First Steps', description: 'Start learning your first phrases', icon: 'footsteps', unlocked: true },
-  { id: '2', title: 'Streak Master', description: 'Maintain a 14-day study streak', icon: 'flame', unlocked: true },
-  { id: '3', title: 'Polyglot Guru', description: 'Try switching languages', icon: 'globe', unlocked: false },
-  { id: '4', title: 'Word Wizard', description: 'Save more than 5 custom phrases', icon: 'book', unlocked: false }
-];
-
 export const ProfileProvider = ({ children }) => {
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
-  const [stats, setStats] = useState(DEFAULT_STATS);
-  const [savedPhrases, setSavedPhrases] = useState(DEFAULT_PHRASES['Spanish']);
-  const [achievements, setAchievements] = useState(DEFAULT_ACHIEVEMENTS);
+  const [state, setState] = useState(DEFAULT_STATE);
   const [loading, setLoading] = useState(true);
 
   // Load state on mount
   useEffect(() => {
     const loadState = async () => {
       try {
-        const storedProfile = await AsyncStorage.getItem(STORAGE_KEYS.PROFILE);
-        const storedStats = await AsyncStorage.getItem(STORAGE_KEYS.STATS);
-        const storedPhrases = await AsyncStorage.getItem(STORAGE_KEYS.PHRASES);
-        const storedAchievements = await AsyncStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
-
-        if (storedProfile) {
-          setProfile(JSON.parse(storedProfile));
-        }
-        if (storedStats) {
-          setStats(JSON.parse(storedStats));
-        }
-        if (storedPhrases) {
-          setSavedPhrases(JSON.parse(storedPhrases));
-        } else {
-          // Default to Spanish phrases if none stored
-          setSavedPhrases(DEFAULT_PHRASES['Spanish']);
-        }
-        if (storedAchievements) {
-          setAchievements(JSON.parse(storedAchievements));
+        const storedState = await AsyncStorage.getItem(STORAGE_KEYS.STATE);
+        if (storedState) {
+          // Merge stored state with defaults to prevent crashes on schema expansion
+          setState(prev => ({
+            ...prev,
+            ...JSON.parse(storedState)
+          }));
         }
       } catch (error) {
-        console.error('Error loading states from AsyncStorage:', error);
+        console.error('Error loading App State from AsyncStorage:', error);
       } finally {
         setLoading(false);
       }
     };
-
     loadState();
   }, []);
 
-  // Sync profile details and update saved phrases language if default ones are used
-  const updateProfile = async (newProfile) => {
+  // Helper to persist state
+  const saveState = async (newState) => {
     try {
-      // If language changed, let's load default phrases for that language to demo TTS
-      const langChanged = newProfile.learningLanguage !== profile.learningLanguage;
-      let updatedPhrases = savedPhrases;
-
-      if (langChanged) {
-        // Load default phrases for new language
-        updatedPhrases = DEFAULT_PHRASES[newProfile.learningLanguage] || DEFAULT_PHRASES['Spanish'];
-        setSavedPhrases(updatedPhrases);
-        await AsyncStorage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(updatedPhrases));
-
-        // Unlock 'Polyglot Guru' achievement
-        const updatedAchievements = achievements.map(ach => {
-          if (ach.id === '3') {
-            return { ...ach, unlocked: true };
-          }
-          return ach;
-        });
-        setAchievements(updatedAchievements);
-        await AsyncStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(updatedAchievements));
-      }
-
-      setProfile(newProfile);
-      await AsyncStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(newProfile));
+      setState(newState);
+      await AsyncStorage.setItem(STORAGE_KEYS.STATE, JSON.stringify(newState));
     } catch (error) {
-      console.error('Error saving profile to AsyncStorage:', error);
+      console.error('Error saving state:', error);
     }
   };
 
-  // Add custom phrase
-  const addSavedPhrase = async (phraseText, translationText) => {
-    try {
-      const langMap = {
-        Spanish: 'es',
-        French: 'fr',
-        Japanese: 'ja',
-        German: 'de',
-        Italian: 'it'
-      };
-      const langCode = langMap[profile.learningLanguage] || 'es';
+  // 1. Update Profile & Preferences
+  const updateProfile = (profileData) => {
+    const newState = {
+      ...state,
+      username: profileData.username !== undefined ? profileData.username : state.username,
+      password: profileData.password !== undefined ? profileData.password : state.password,
+      learningLanguage: profileData.learningLanguage !== undefined ? profileData.learningLanguage : state.learningLanguage,
+      speechSpeed: profileData.speechSpeed !== undefined ? profileData.speechSpeed : state.speechSpeed,
+      voiceGender: profileData.voiceGender !== undefined ? profileData.voiceGender : state.voiceGender,
+      theme: profileData.theme !== undefined ? profileData.theme : state.theme,
+      accentColor: profileData.accentColor !== undefined ? profileData.accentColor : state.accentColor,
+      notificationsEnabled: profileData.notificationsEnabled !== undefined ? profileData.notificationsEnabled : state.notificationsEnabled,
+    };
 
-      const newPhrase = {
-        id: Date.now().toString(),
-        phrase: phraseText,
-        translation: translationText,
-        language: langCode
-      };
-
-      const updatedPhrases = [newPhrase, ...savedPhrases];
-      setSavedPhrases(updatedPhrases);
-      await AsyncStorage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(updatedPhrases));
-
-      // Update stats: phrases learned
-      const updatedStats = {
-        ...stats,
-        phrasesLearned: stats.phrasesLearned + 1
-      };
-      setStats(updatedStats);
-      await AsyncStorage.setItem(STORAGE_KEYS.STATS, JSON.stringify(updatedStats));
-
-      // Check for Word Wizard achievement
-      if (updatedPhrases.length > 5) {
-        const updatedAchievements = achievements.map(ach => {
-          if (ach.id === '4') {
-            return { ...ach, unlocked: true };
-          }
-          return ach;
-        });
-        setAchievements(updatedAchievements);
-        await AsyncStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(updatedAchievements));
-      }
-    } catch (error) {
-      console.error('Error adding saved phrase:', error);
+    // Check language change to trigger Polyglot Guru progress/unlock
+    if (profileData.learningLanguage && profileData.learningLanguage !== state.learningLanguage) {
+      newState.achievements = newState.achievements.map(ach => {
+        if (ach.id === 'ach3') {
+          return { ...ach, unlocked: true, progress: 100 };
+        }
+        return ach;
+      });
+      // Add notification
+      newState.notifications = [
+        { id: Date.now().toString(), title: 'Achievement Unlocked', message: 'You earned the "Polyglot Guru" badge!', read: false, time: 'Just now' },
+        ...newState.notifications
+      ];
+      // Add Activity log
+      newState.recentActivity = [
+        { id: Date.now().toString(), type: 'badge', title: 'Unlocked Polyglot Guru Badge', time: 'Just now' },
+        ...newState.recentActivity
+      ];
     }
+
+    saveState(newState);
   };
 
-  // Delete phrase
-  const deleteSavedPhrase = async (id) => {
-    try {
-      const updatedPhrases = savedPhrases.filter(item => item.id !== id);
-      setSavedPhrases(updatedPhrases);
-      await AsyncStorage.setItem(STORAGE_KEYS.PHRASES, JSON.stringify(updatedPhrases));
-    } catch (error) {
-      console.error('Error deleting saved phrase:', error);
+  // 2. Add custom phrase
+  const addSavedPhrase = (phraseText, translationText, pronunciation = '') => {
+    const newPhrase = {
+      id: Date.now().toString(),
+      phrase: phraseText,
+      translation: translationText,
+      language: state.learningLanguage,
+      pronunciation
+    };
+
+    const updatedPhrases = [newPhrase, ...state.savedPhrases];
+    const newState = {
+      ...state,
+      savedPhrases: updatedPhrases
+    };
+
+    // Track daily goal 'Learn 5 phrases'
+    newState.dailyGoals = newState.dailyGoals.map(goal => {
+      if (goal.type === 'phrases') {
+        const nextCurrent = Math.min(goal.target, goal.current + 1);
+        return {
+          ...goal,
+          current: nextCurrent,
+          completed: nextCurrent >= goal.target
+        };
+      }
+      return goal;
+    });
+
+    // Award XP and coins for saving a phrase
+    newState.xp += 10;
+    newState.coins += 2;
+
+    // Check level up (every 200 XP is a level)
+    const newLevel = Math.floor(newState.xp / 200) + 1;
+    if (newLevel > newState.level) {
+      newState.level = newLevel;
+      newState.notifications = [
+        { id: Date.now().toString(), title: 'Leveled Up!', message: `Congratulations, you reached Level ${newLevel}!`, read: false, time: 'Just now' },
+        ...newState.notifications
+      ];
     }
+
+    // Update achievement 'Word Wizard'
+    const wordWizardProgress = Math.min(100, Math.round((updatedPhrases.length / 5) * 100));
+    newState.achievements = newState.achievements.map(ach => {
+      if (ach.id === 'ach4') {
+        return {
+          ...ach,
+          progress: wordWizardProgress,
+          unlocked: wordWizardProgress >= 100
+        };
+      }
+      return ach;
+    });
+
+    saveState(newState);
+  };
+
+  // 3. Delete custom phrase
+  const deleteSavedPhrase = (id) => {
+    const updatedPhrases = state.savedPhrases.filter(item => item.id !== id);
+    saveState({
+      ...state,
+      savedPhrases: updatedPhrases
+    });
+  };
+
+  // 4. Update Trip Details
+  const updateTrip = (tripData) => {
+    saveState({
+      ...state,
+      trip: {
+        ...state.trip,
+        ...tripData
+      }
+    });
+  };
+
+  // 5. Complete Lesson Action
+  const completeLesson = (categoryKey) => {
+    const newState = {
+      ...state,
+      lessonsCompleted: state.lessonsCompleted + 1,
+      xp: state.xp + 50,
+      coins: state.coins + 10
+    };
+
+    // Check level up
+    const newLevel = Math.floor(newState.xp / 200) + 1;
+    if (newLevel > newState.level) {
+      newState.level = newLevel;
+    }
+
+    // Toggle daily goal
+    newState.dailyGoals = newState.dailyGoals.map(goal => {
+      if (goal.type === 'flashcards') {
+        return { ...goal, completed: true };
+      }
+      return goal;
+    });
+
+    newState.recentActivity = [
+      { id: Date.now().toString(), type: 'lesson', title: `Finished ${categoryKey} Lesson`, time: 'Just now' },
+      ...newState.recentActivity
+    ];
+
+    saveState(newState);
+  };
+
+  // 6. Complete Simulation Action
+  const completeSimulation = (scenarioKey, xpAwarded = 50) => {
+    const newState = {
+      ...state,
+      simulationsCompleted: state.simulationsCompleted + 1,
+      xp: state.xp + xpAwarded,
+      coins: state.coins + 15
+    };
+
+    // Check level up
+    const newLevel = Math.floor(newState.xp / 200) + 1;
+    if (newLevel > newState.level) {
+      newState.level = newLevel;
+    }
+
+    // Toggle daily goal
+    newState.dailyGoals = newState.dailyGoals.map(goal => {
+      if (goal.type === 'simulation') {
+        return { ...goal, completed: true };
+      }
+      return goal;
+    });
+
+    // Check specific badges
+    if (scenarioKey === 'restaurant') {
+      newState.achievements = newState.achievements.map(ach => {
+        if (ach.id === 'ach6') {
+          return { ...ach, unlocked: true, progress: 100 };
+        }
+        return ach;
+      });
+    }
+
+    newState.recentActivity = [
+      { id: Date.now().toString(), type: 'simulation', title: `Completed ${scenarioKey} Simulation`, time: 'Just now' },
+      ...newState.recentActivity
+    ];
+
+    saveState(newState);
+  };
+
+  // 7. Pronunciation Practice completed
+  const completePronunciationPractice = (xpAwarded = 20) => {
+    const newState = {
+      ...state,
+      pronunciationPractices: state.pronunciationPractices + 1,
+      xp: state.xp + xpAwarded,
+      coins: state.coins + 5
+    };
+
+    // Toggle daily goal
+    newState.dailyGoals = newState.dailyGoals.map(goal => {
+      if (goal.type === 'pronunciation') {
+        return { ...goal, completed: true };
+      }
+      return goal;
+    });
+
+    newState.recentActivity = [
+      { id: Date.now().toString(), type: 'practice', title: 'Completed Pronunciation Session', time: 'Just now' },
+      ...newState.recentActivity
+    ];
+
+    saveState(newState);
+  };
+
+  // 8. Translation History Logging
+  const addTranslationToHistory = (sourceText, translatedText) => {
+    const newHistory = {
+      id: Date.now().toString(),
+      sourceText,
+      translatedText,
+      language: state.learningLanguage
+    };
+    saveState({
+      ...state,
+      translationHistory: [newHistory, ...state.translationHistory]
+    });
+  };
+
+  // 9. Reset progress entirely
+  const resetProgress = () => {
+    saveState(DEFAULT_STATE);
   };
 
   return (
     <ProfileContext.Provider
       value={{
-        profile,
-        stats,
-        savedPhrases,
-        achievements,
+        ...state,
+        profile: {
+          username: state.username,
+          password: state.password,
+          learningLanguage: state.learningLanguage
+        },
         loading,
         updateProfile,
         addSavedPhrase,
-        deleteSavedPhrase
+        deleteSavedPhrase,
+        updateTrip,
+        completeLesson,
+        completeSimulation,
+        completePronunciationPractice,
+        addTranslationToHistory,
+        resetProgress
       }}
     >
       {children}

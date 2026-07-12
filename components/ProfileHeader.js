@@ -5,10 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../context/ProfileContext';
 
 export default function ProfileHeader() {
-  const { profile } = useContext(ProfileContext);
+  const { username, learningLanguage } = useContext(ProfileContext);
   const router = useRouter();
 
-  // Language flag mapping
   const languageFlags = {
     Spanish: '🇪🇸',
     French: '🇫🇷',
@@ -31,16 +30,16 @@ export default function ProfileHeader() {
     <View style={styles.headerContainer}>
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(profile.username)}</Text>
+          <Text style={styles.avatarText}>{getInitials(username)}</Text>
         </View>
         <View style={styles.profileTextContainer}>
-          <Text style={styles.greetingText}>Hello, 👋</Text>
-          <Text style={styles.usernameText}>{profile.username}</Text>
+          <Text style={styles.greetingText}>Hello</Text>
+          <Text style={styles.usernameText}>{username}</Text>
           <View style={styles.languageBadge}>
             <Text style={styles.languageFlag}>
-              {languageFlags[profile.learningLanguage] || '🌐'}
+              {languageFlags[learningLanguage] || '🌐'}
             </Text>
-            <Text style={styles.languageText}>Learning {profile.learningLanguage}</Text>
+            <Text style={styles.languageText}>Learning {learningLanguage}</Text>
           </View>
         </View>
       </View>
@@ -49,7 +48,7 @@ export default function ProfileHeader() {
         onPress={() => router.push('/profile/settings')}
         activeOpacity={0.7}
       >
-        <Ionicons name="settings-outline" size={24} color="#7b4eff" />
+        <Ionicons name="settings-outline" size={22} color="#8B5CF6" />
       </TouchableOpacity>
     </View>
   );
@@ -60,15 +59,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFF',
     paddingHorizontal: 20,
     paddingVertical: 18,
     borderRadius: 20,
     marginBottom: 16,
-    shadowColor: '#7b4eff',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 4,
   },
   profileSection: {
@@ -80,15 +81,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#7b4eff',
+    backgroundColor: '#8B5CF6',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 15,
-    borderWidth: 3,
-    borderColor: '#e8e0ff',
   },
   avatarText: {
-    color: '#ffffff',
+    color: '#FFF',
     fontSize: 20,
     fontWeight: 'bold',
     letterSpacing: 1,
@@ -99,23 +98,25 @@ const styles = StyleSheet.create({
   },
   greetingText: {
     fontSize: 14,
-    color: '#777777',
+    color: '#64748B',
     fontWeight: '600',
-  },
+    },
   usernameText: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#0F172A',
     marginBottom: 4,
   },
   languageBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f1ecff',
+    backgroundColor: '#FAF5FF',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
   languageFlag: {
     fontSize: 14,
@@ -123,16 +124,18 @@ const styles = StyleSheet.create({
   },
   languageText: {
     fontSize: 12,
-    color: '#7b4eff',
+    color: '#8B5CF6',
     fontWeight: 'bold',
-  },
+    },
   settingsButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#f1ecff',
+    backgroundColor: '#FAF5FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 10,
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
 });

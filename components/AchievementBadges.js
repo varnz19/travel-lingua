@@ -6,12 +6,14 @@ import { ProfileContext } from '../context/ProfileContext';
 export default function AchievementBadges() {
   const { achievements } = useContext(ProfileContext);
 
-  // Map icon names from context to Ionicons names
   const iconMap = {
-    footsteps: 'footsteps-sharp',
-    flame: 'flame-sharp',
-    globe: 'globe-sharp',
-    book: 'book-sharp'
+    footsteps: 'footsteps-outline',
+    flame: 'flame-outline',
+    globe: 'globe-outline',
+    book: 'book-outline',
+    trophy: 'trophy-outline',
+    restaurant: 'restaurant-outline',
+    compass: 'compass-outline'
   };
 
   return (
@@ -39,9 +41,9 @@ export default function AchievementBadges() {
                 ]}
               >
                 <Ionicons
-                  name={iconMap[badge.icon] || 'trophy'}
+                  name={iconMap[badge.icon] || 'trophy-outline'}
                   size={26}
-                  color={isUnlocked ? '#ffffff' : '#a0a0a0'}
+                  color={isUnlocked ? '#8B5CF6' : '#94A3B8'}
                 />
               </View>
               <Text
@@ -59,7 +61,7 @@ export default function AchievementBadges() {
               
               {!isUnlocked && (
                 <View style={styles.lockedTag}>
-                  <Ionicons name="lock-closed" size={10} color="#888888" style={{ marginRight: 2 }} />
+                  <Ionicons name="lock-closed-outline" size={10} color="#94A3B8" style={{ marginRight: 2 }} />
                   <Text style={styles.lockedTagText}>LOCKED</Text>
                 </View>
               )}
@@ -76,37 +78,36 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   sectionHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 14,
     paddingLeft: 4,
-  },
+    },
   scrollContent: {
     paddingLeft: 4,
     paddingRight: 20,
     paddingVertical: 5,
   },
   badgeCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFF',
     width: 130,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 12,
     marginRight: 12,
     alignItems: 'center',
-    textAlign: 'center',
-    shadowColor: '#000000',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#e8e0ff',
+    borderColor: '#E2E8F0',
   },
   lockedBadgeCard: {
-    backgroundColor: '#fafafa',
-    borderColor: '#e8e8e8',
-    opacity: 0.75,
+    backgroundColor: '#FFF',
+    borderColor: '#E2E8F0',
+    opacity: 0.65,
   },
   iconContainer: {
     width: 50,
@@ -117,40 +118,44 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   unlockedIconContainer: {
-    backgroundColor: '#7b4eff',
+    backgroundColor: '#FAF5FF',
+    borderWidth: 1,
+    borderColor: '#E9D5FF',
   },
   lockedIconContainer: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#F1F5F9',
   },
   titleText: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#0F172A',
     marginBottom: 4,
     textAlign: 'center',
-  },
+    },
   lockedTitleText: {
-    color: '#777777',
+    color: '#94A3B8',
   },
   descText: {
     fontSize: 10,
-    color: '#888888',
+    color: '#475569',
     textAlign: 'center',
     lineHeight: 13,
-    height: 26, // fix height to prevent alignment issues
-  },
+    height: 26,
+    },
   lockedTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#e8e8e8',
+    backgroundColor: '#FFF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   lockedTagText: {
     fontSize: 8,
     fontWeight: 'bold',
-    color: '#777777',
-  },
+    color: '#94A3B8',
+    },
 });

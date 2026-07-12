@@ -1,63 +1,68 @@
 import { Tabs } from 'expo-router';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   return (
-    <View style={styles.bottomNav}>
-      {state.routes.map((route: any, index: number) => {
-        // Exclude explore route from tabs if it exists in the tree but isn't meant for the main nav
-        if (route.name === 'explore') return null;
+    <View style={styles.bottomNavWrapper}>
+      <View style={styles.bottomNav}>
+        {state.routes.map((route: any, index: number) => {
+          if (route.name === 'explore') return null;
 
-        const { options } = descriptors[route.key];
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name;
+          const { options } = descriptors[route.key];
+          const label =
+            options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+              ? options.title
+              : route.name;
 
-        const isFocused = state.index === index;
+          const isFocused = state.index === index;
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
 
-        let icon = "🏠";
-        if (route.name === 'learn') icon = "📖";
-        if (route.name === 'simulate') icon = "💬";
-        if (route.name === 'profile') icon = "👤";
+          let iconName: any = "home-outline";
+          if (route.name === 'learn') iconName = "book-outline";
+          if (route.name === 'simulate') iconName = "chatbubble-ellipses-outline";
+          if (route.name === 'profile') iconName = "person-outline";
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarTestID}
-            onPress={onPress}
-            style={styles.navItem}
-          >
-            {isFocused ? (
-              <View style={styles.activeIconBackground}>
-                <Text style={styles.navIconActive}>{icon}</Text>
-              </View>
-            ) : (
-              <Text style={styles.navIcon}>{icon}</Text>
-            )}
-            <Text style={isFocused ? styles.navLabelActive : styles.navLabel}>
-              {label}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+          const activeColor = '#8B5CF6';
+          const inactiveColor = '#94A3B8';
+
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={options.tabBarTestID}
+              onPress={onPress}
+              style={styles.navItem}
+              activeOpacity={0.7}
+            >
+              <Ionicons 
+                name={iconName} 
+                size={22} 
+                color={isFocused ? activeColor : inactiveColor} 
+                style={{ marginBottom: 3 }}
+              />
+              <Text style={isFocused ? styles.navLabelActive : styles.navLabel}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -99,50 +104,40 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  bottomNavWrapper: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: 'transparent',
+  },
   bottomNav: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#FFF',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
+    paddingVertical: 14,
+    borderRadius: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 5,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 15,
-  },
-  activeIconBackground: {
-    backgroundColor: '#8B5CF6',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  navIcon: {
-    fontSize: 22,
-    marginBottom: 4,
-    opacity: 0.5,
-  },
-  navIconActive: {
-    fontSize: 20,
-    color: '#FFF',
+    paddingHorizontal: 12,
   },
   navLabel: {
     fontSize: 11,
     fontWeight: '500',
     color: '#94A3B8',
-  },
+    },
   navLabelActive: {
     fontSize: 11,
     fontWeight: '700',
     color: '#8B5CF6',
-  },
-});
+    },
+}) as any;

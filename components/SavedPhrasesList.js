@@ -1,269 +1,121 @@
-import React, { useContext, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  FlatList,
-  Alert
-} from 'react-native';
+import React, { useContext } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Speech from 'expo-speech';
 import { ProfileContext } from '../context/ProfileContext';
 
 export default function SavedPhrasesList() {
-  const { savedPhrases, addSavedPhrase, deleteSavedPhrase, profile } = useContext(ProfileContext);
-  const [newPhrase, setNewPhrase] = useState('');
-  const [newTranslation, setNewTranslation] = useState('');
-  const [playingId, setPlayingId] = useState(null);
+  const { savedPhrases, deleteSavedPhrase } = useContext(ProfileContext);
 
-  const handleSpeak = async (item) => {
-    try {
-      if (playingId === item.id) {
-        await Speech.stop();
-        setPlayingId(null);
-        return;
-      }
-
-      await Speech.stop();
-      setPlayingId(item.id);
-      
-      Speech.speak(item.phrase, {
-        language: item.language,
-        onDone: () => setPlayingId(null),
-        onStopped: () => setPlayingId(null),
-        onError: (err) => {
-          console.log('Speech error:', err);
-          setPlayingId(null);
-        }
-      });
-    } catch (error) {
-      console.error(error);
-      setPlayingId(null);
-    }
-  };
-
-  const handleAddPhrase = () => {
-    if (!newPhrase.trim() || !newTranslation.trim()) {
-      Alert.alert('Incomplete Fields', 'Please enter both a phrase and its translation.');
-      return;
-    }
-    addSavedPhrase(newPhrase.trim(), newTranslation.trim());
-    setNewPhrase('');
-    setNewTranslation('');
-  };
-
-  const renderPhraseItem = ({ item }) => {
-    const isPlaying = playingId === item.id;
+  if (savedPhrases.length === 0) {
     return (
-      <View style={styles.phraseItem}>
-        <View style={styles.phraseContent}>
-          <Text style={styles.originalText}>{item.phrase}</Text>
-          <Text style={styles.translationText}>{item.translation}</Text>
-        </View>
-        <View style={styles.actionButtons}>
-          <TouchableOpacity
-            style={[styles.audioButton, isPlaying && styles.audioButtonPlaying]}
-            onPress={() => handleSpeak(item)}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isPlaying ? 'volume-high' : 'volume-medium-outline'}
-              size={20}
-              color={isPlaying ? '#ffffff' : '#7b4eff'}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => deleteSavedPhrase(item.id)}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={18} color="#ff4d4f" />
-          </TouchableOpacity>
+      <View style={styles.container}>
+        <Text style={styles.sectionHeader}>Saved Vocabulary</Text>
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No saved phrases yet. Practice cards or use translation tools to bookmark key expressions.</Text>
         </View>
       </View>
     );
-  };
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.sectionHeader}>Saved Vocabulary & Phrases</Text>
-      
-      {savedPhrases.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Ionicons name="journal-outline" size={36} color="#cccccc" />
-          <Text style={styles.emptyText}>No phrases saved yet. Add one below!</Text>
+      <Text style={styles.sectionHeader}>Saved Vocabulary</Text>
+      {savedPhrases.slice(0, 4).map((phrase) => (
+        <View key={phrase.id} style={styles.phraseCard}>
+          <View style={styles.textContainer}>
+            <Text style={styles.phraseNative}>{phrase.phrase}</Text>
+            <Text style={styles.phraseTranslation}>{phrase.translation}</Text>
+            {phrase.pronunciation ? (
+              <Text style={styles.phrasePron}>Phonetic: {phrase.pronunciation}</Text>
+            ) : null}
+            <Text style={styles.langBadge}>{phrase.language}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.deleteBtn}
+            onPress={() => deleteSavedPhrase(phrase.id)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          </TouchableOpacity>
         </View>
-      ) : (
-        <FlatList
-          data={savedPhrases}
-          keyExtractor={(item) => item.id}
-          renderItem={renderPhraseItem}
-          scrollEnabled={false} // List runs inside a Parent ScrollView in Dashboard Screen
-          contentContainerStyle={styles.listContent}
-        />
-      )}
-
-      {/* Input section to add new phrase */}
-      <View style={styles.addCard}>
-        <Text style={styles.addCardTitle}>Add Custom Phrase ({profile.learningLanguage})</Text>
-        
-        <TextInput
-          style={styles.input}
-          placeholder={`Enter phrase in ${profile.learningLanguage} (e.g. ¡Gracias!)`}
-          placeholderTextColor="#999999"
-          value={newPhrase}
-          onChangeText={setNewPhrase}
-        />
-        
-        <TextInput
-          style={styles.input}
-          placeholder="Enter English translation (e.g. Thank you!)"
-          placeholderTextColor="#999999"
-          value={newTranslation}
-          onChangeText={setNewTranslation}
-        />
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={handleAddPhrase}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add-circle" size={20} color="#ffffff" style={{ marginRight: 6 }} />
-          <Text style={styles.addButtonText}>Save to List</Text>
-        </TouchableOpacity>
-      </View>
+      ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   sectionHeader: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 10,
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 14,
     paddingLeft: 4,
-  },
-  listContent: {
-    gap: 10,
-    marginBottom: 14,
-  },
-  phraseItem: {
+    },
+  phraseCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#f0f2f5',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
   },
-  phraseContent: {
+  textContainer: {
     flex: 1,
-    marginRight: 10,
   },
-  originalText: {
-    fontSize: 15,
-    fontWeight: 'bold',
-    color: '#333333',
+  phraseNative: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 2,
-  },
-  translationText: {
+    },
+  phraseTranslation: {
+    fontSize: 14,
+    color: '#475569',
+    marginBottom: 6,
+    },
+  phrasePron: {
     fontSize: 12,
-    color: '#777777',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  audioButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#f1ecff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  audioButtonPlaying: {
-    backgroundColor: '#7b4eff',
-  },
-  deleteButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#fff1f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  emptyContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontStyle: 'italic',
+    color: '#94A3B8',
+    marginBottom: 6,
+    },
+  langBadge: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    backgroundColor: '#FAF5FF',
+    color: '#8B5CF6',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#f0f2f5',
-    marginBottom: 14,
+    borderColor: '#E9D5FF',
+  },
+  deleteBtn: {
+    padding: 8,
+  },
+  emptyState: {
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
   },
   emptyText: {
-    marginTop: 8,
     fontSize: 13,
-    color: '#999999',
+    color: '#475569',
     textAlign: 'center',
-  },
-  addCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e8e0ff',
-    shadowColor: '#7b4eff',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  addCardTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#7b4eff',
-    marginBottom: 12,
-  },
-  input: {
-    backgroundColor: '#f9f9fc',
-    borderWidth: 1,
-    borderColor: '#e2e2e9',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: '#333333',
-    marginBottom: 10,
-  },
-  addButton: {
-    backgroundColor: '#7b4eff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    marginTop: 2,
-  },
-  addButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
+    lineHeight: 18,
+    },
 });
