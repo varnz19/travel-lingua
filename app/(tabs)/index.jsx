@@ -15,7 +15,7 @@ export default function App() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <View style={styles.mobileWrapper}>
+      <View style={{ flex: 1, backgroundColor: '#F8F9FA' }}>
         
         <ScrollView 
           contentContainerStyle={styles.container}
@@ -59,7 +59,7 @@ export default function App() {
 
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => router.push("/simulation")}
+              onPress={() => router.push("/simulate")}
             >
               <View style={[styles.iconContainer, { backgroundColor: '#F3E8FF' }]}>
                 <Text style={styles.actionIcon}>💬</Text>
@@ -170,31 +170,6 @@ export default function App() {
 
         </ScrollView>
 
-        {/* Bottom Navigation Bar */}
-        <View style={styles.bottomNav}>
-          <TouchableOpacity style={styles.navItem} onPress={() => alert("Already on Home")}>
-            <View style={styles.activeIconBackground}>
-               <Text style={styles.navIconActive}>🏠</Text>
-            </View>
-            <Text style={styles.navLabelActive}>Home</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem} onPress={() => alert("Go to Learn")}>
-            <Text style={styles.navIcon}>📖</Text>
-            <Text style={styles.navLabel}>Learn</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/simulation")}>
-            <Text style={styles.navIcon}>💬</Text>
-            <Text style={styles.navLabel}>Simulate</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.navItem} onPress={() => alert("Go to Profile")}>
-            <Text style={styles.navIcon}>👤</Text>
-            <Text style={styles.navLabel}>Profile</Text>
-          </TouchableOpacity>
-        </View>
-
       </View>
     </SafeAreaView>
   );
@@ -204,20 +179,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: Platform.OS === 'web' ? '#E2E8F0' : '#F8F9FA', 
-  },
-  mobileWrapper: {
-    flex: 1,
-    width: '100%',
-    maxWidth: 480, 
-    alignSelf: 'center', 
-    backgroundColor: '#F8F9FA',
-    ...Platform.select({
-      web: {
-        boxShadow: '0px 0px 20px rgba(0,0,0,0.1)',
-        height: '100vh', 
-        overflow: 'hidden', 
-      }
-    })
   },
   container: {
     padding: 20,
