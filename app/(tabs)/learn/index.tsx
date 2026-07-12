@@ -22,7 +22,7 @@ export default function LearnScreen() {
             <TouchableOpacity 
               key={cat.key} 
               style={styles.card}
-              onPress={() => router.push(`/flashcards/${cat.key}`)}
+              onPress={() => router.push(`/learn/flashcards/${cat.key}`)}
             >
               <Text style={styles.cardIcon}>{cat.icon}</Text>
               <Text style={styles.cardTitle}>{cat.title}</Text>

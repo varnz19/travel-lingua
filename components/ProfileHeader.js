@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../context/ProfileContext';
 
 export default function ProfileHeader() {
   const { profile } = useContext(ProfileContext);
-  const navigation = useNavigation();
+  const router = useRouter();
 
   // Language flag mapping
   const languageFlags = {
@@ -46,7 +46,7 @@ export default function ProfileHeader() {
       </View>
       <TouchableOpacity
         style={styles.settingsButton}
-        onPress={() => navigation.navigate('Settings')}
+        onPress={() => router.push('/profile/settings')}
         activeOpacity={0.7}
       >
         <Ionicons name="settings-outline" size={24} color="#7b4eff" />

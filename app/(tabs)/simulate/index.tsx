@@ -53,7 +53,7 @@ export default function Home() {
             key={index}
             onPress={() =>
               router.push({
-                pathname: '/simulation/chat',
+                pathname: '/simulate/chat',
                 params: { type: item.key }
               })
             }

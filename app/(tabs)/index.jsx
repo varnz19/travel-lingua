@@ -100,7 +100,7 @@ export default function App() {
           {/* Lesson Card 1 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => router.push("/flashcards/greetings")}
+            onPress={() => router.push("/learn/flashcards/greetings")}
           >
             <Text style={styles.lessonEmoji}>👋</Text>
             <View style={styles.lessonContent}>
@@ -119,7 +119,7 @@ export default function App() {
           {/* Lesson Card 2 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => router.push("/flashcards/food")}
+            onPress={() => router.push("/learn/flashcards/food")}
           >
             <Text style={styles.lessonEmoji}>🍜</Text>
             <View style={styles.lessonContent}>
@@ -138,7 +138,7 @@ export default function App() {
           {/* Lesson Card 3 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => router.push("/flashcards/transport")}
+            onPress={() => router.push("/learn/flashcards/transport")}
           >
             <Text style={styles.lessonEmoji}>🚕</Text>
             <View style={styles.lessonContent}>

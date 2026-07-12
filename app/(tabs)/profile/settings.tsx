@@ -12,10 +12,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { ProfileContext } from '../context/ProfileContext';
+import { ProfileContext } from '../../../context/ProfileContext';
 
-export default function SettingsScreen({ navigation }) {
+import { useRouter } from 'expo-router';
+
+export default function SettingsScreen() {
   const { profile, updateProfile } = useContext(ProfileContext);
+  const router = useRouter();
 
   // Local state for form fields
   const [username, setUsername] = useState(profile.username);
@@ -51,7 +54,7 @@ export default function SettingsScreen({ navigation }) {
     Alert.alert(
       'Settings Saved',
       'Your profile changes have been updated in real-time!',
-      [{ text: 'OK', onPress: () => navigation.goBack() }]
+      [{ text: 'OK', onPress: () => router.back() }]
     );
   };
 
@@ -69,7 +72,7 @@ export default function SettingsScreen({ navigation }) {
           <View style={styles.header}>
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => navigation.goBack()}
+              onPress={() => router.back()}
               activeOpacity={0.7}
             >
               <Ionicons name="arrow-back" size={24} color="#333333" />

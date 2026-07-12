@@ -1,13 +1,16 @@
 import { Stack } from 'expo-router';
 import { View, Platform, StyleSheet } from 'react-native';
+import { ProfileProvider } from '../context/ProfileContext';
 
 export default function RootLayout() {
   return (
-    <View style={styles.root}>
-      <View style={styles.mobileFrame}>
-        <Stack screenOptions={{ headerShown: false }} />
+    <ProfileProvider>
+      <View style={styles.root}>
+        <View style={styles.mobileFrame}>
+          <Stack screenOptions={{ headerShown: false }} />
+        </View>
       </View>
-    </View>
+    </ProfileProvider>
   );
 }
 

@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
 import { ScrollView, StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ProfileContext } from '../context/ProfileContext';
-import ProfileHeader from '../components/ProfileHeader';
-import UpcomingTrip from '../components/UpcomingTrip';
-import StatsGrid from '../components/StatsGrid';
-import AchievementBadges from '../components/AchievementBadges';
-import SavedPhrasesList from '../components/SavedPhrasesList';
+import { ProfileContext } from '../../../context/ProfileContext';
+import ProfileHeader from '../../../components/ProfileHeader';
+import UpcomingTrip from '../../../components/UpcomingTrip';
+import StatsGrid from '../../../components/StatsGrid';
+import AchievementBadges from '../../../components/AchievementBadges';
+import SavedPhrasesList from '../../../components/SavedPhrasesList';
 
 export default function DashboardScreen() {
   const { loading } = useContext(ProfileContext);
