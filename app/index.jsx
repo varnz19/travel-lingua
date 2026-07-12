@@ -8,8 +8,11 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function App() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.mobileWrapper}>
@@ -56,7 +59,7 @@ export default function App() {
 
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => alert("Starting Simulation...")}
+              onPress={() => router.push("/simulation")}
             >
               <View style={[styles.iconContainer, { backgroundColor: '#F3E8FF' }]}>
                 <Text style={styles.actionIcon}>💬</Text>
@@ -181,7 +184,7 @@ export default function App() {
             <Text style={styles.navLabel}>Learn</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navItem} onPress={() => alert("Go to Simulate")}>
+          <TouchableOpacity style={styles.navItem} onPress={() => router.push("/simulation")}>
             <Text style={styles.navIcon}>💬</Text>
             <Text style={styles.navLabel}>Simulate</Text>
           </TouchableOpacity>
