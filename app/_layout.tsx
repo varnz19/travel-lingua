@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         boxShadow: '0px 0px 20px rgba(0,0,0,0.1)' as any,
-        height: '100vh',
+        height: '100%' as any,
         overflow: 'hidden',
       }
     })

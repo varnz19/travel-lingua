@@ -49,7 +49,7 @@ export default function App() {
           <View style={styles.actionRow}>
             <TouchableOpacity 
               style={styles.actionButton}
-              onPress={() => alert("Opening Learn Module...")}
+              onPress={() => router.push("/learn")}
             >
               <View style={[styles.iconContainer, { backgroundColor: '#E0E7FF' }]}>
                 <Text style={styles.actionIcon}>📖</Text>
@@ -100,7 +100,7 @@ export default function App() {
           {/* Lesson Card 1 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => alert("Starting Lesson: Basic Hello & Goodbye")}
+            onPress={() => router.push("/flashcards/greetings")}
           >
             <Text style={styles.lessonEmoji}>👋</Text>
             <View style={styles.lessonContent}>
@@ -119,7 +119,7 @@ export default function App() {
           {/* Lesson Card 2 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => alert("Starting Lesson: Ordering at Restaurants")}
+            onPress={() => router.push("/flashcards/food")}
           >
             <Text style={styles.lessonEmoji}>🍜</Text>
             <View style={styles.lessonContent}>
@@ -138,7 +138,7 @@ export default function App() {
           {/* Lesson Card 3 - NOW CLICKABLE */}
           <TouchableOpacity 
             style={styles.lessonCard}
-            onPress={() => alert("Starting Lesson: Taking a Taxi")}
+            onPress={() => router.push("/flashcards/transport")}
           >
             <Text style={styles.lessonEmoji}>🚕</Text>
             <View style={styles.lessonContent}>
