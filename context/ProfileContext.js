@@ -8,8 +8,14 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_STATE = {
+  // Authentication & Session
+  isLoggedIn: false,
+
   // Profile & Preferences
-  username: 'Sarah Jenkins',
+  phoneNumber: '',
+  username: 'sarahj',
+  name: 'Sarah Jenkins',
+  email: 'sarah.jenkins@example.com',
   password: 'password123',
   learningLanguage: 'Japanese',
   speechSpeed: 1.0,
@@ -85,10 +91,12 @@ export const ProfileProvider = ({ children }) => {
       try {
         const storedState = await AsyncStorage.getItem(STORAGE_KEYS.STATE);
         if (storedState) {
-          // Merge stored state with defaults to prevent crashes on schema expansion
+          // Merge stored state with defaults to prevent crashes on schema expansion.
+          // Always reset isLoggedIn to false so user must actively log in each session.
           setState(prev => ({
             ...prev,
-            ...JSON.parse(storedState)
+            ...JSON.parse(storedState),
+            isLoggedIn: false
           }));
         }
       } catch (error) {
@@ -114,6 +122,7 @@ export const ProfileProvider = ({ children }) => {
   const updateProfile = (profileData) => {
     const newState = {
       ...state,
+      name: profileData.name !== undefined ? profileData.name : state.name,
       username: profileData.username !== undefined ? profileData.username : state.username,
       password: profileData.password !== undefined ? profileData.password : state.password,
       learningLanguage: profileData.learningLanguage !== undefined ? profileData.learningLanguage : state.learningLanguage,
@@ -342,12 +351,71 @@ export const ProfileProvider = ({ children }) => {
     saveState(DEFAULT_STATE);
   };
 
+  const login = (usrOrEmail, pwd) => {
+    const input = (usrOrEmail || '').trim();
+    const cleanUsr = input.toLowerCase();
+    const cleanPwd = (pwd || '').trim();
+
+    if (!cleanUsr || !cleanPwd) return false;
+
+    const currentUsr = (state.username || '').trim().toLowerCase();
+    const currentEmail = (state.email || '').trim().toLowerCase();
+    const currentPhone = (state.phoneNumber || '').replace(/\s+/g, '').toLowerCase();
+    const cleanInputPhone = cleanUsr.replace(/\s+/g, '');
+
+    const isUsernameMatch = currentUsr && currentUsr === cleanUsr;
+    const isEmailMatch = currentEmail && currentEmail === cleanUsr;
+    const isPhoneMatch = currentPhone && cleanInputPhone && currentPhone === cleanInputPhone;
+    const isPasswordMatch = (state.password || '').trim() === cleanPwd;
+
+    // Demo account fallback check
+    const isDemoMatch = (cleanUsr === 'sarahj' || cleanUsr === 'sarah.jenkins@example.com') && cleanPwd === 'password123';
+
+    if (((isUsernameMatch || isEmailMatch || isPhoneMatch) && isPasswordMatch) || isDemoMatch) {
+      saveState({
+        ...state,
+        isLoggedIn: true
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const signup = (signupData, tripData = {}) => {
+    saveState({
+      ...state,
+      phoneNumber: signupData.phoneNumber || state.phoneNumber,
+      username: signupData.username || state.username,
+      name: signupData.name || state.name,
+      email: signupData.email || state.email,
+      password: signupData.password || state.password,
+      learningLanguage: signupData.learningLanguage || state.learningLanguage,
+      trip: {
+        destination: tripData.destination || state.trip.destination,
+        departureDate: tripData.departureDate || state.trip.departureDate,
+        duration: tripData.duration || state.trip.duration,
+        purpose: tripData.purpose || state.trip.purpose
+      },
+      isLoggedIn: true
+    });
+    return true;
+  };
+
+  const logout = () => {
+    saveState({
+      ...state,
+      isLoggedIn: false
+    });
+  };
+
   return (
     <ProfileContext.Provider
       value={{
         ...state,
+        username: state.username,
         profile: {
           username: state.username,
+          name: state.name,
           password: state.password,
           learningLanguage: state.learningLanguage
         },
@@ -360,7 +428,10 @@ export const ProfileProvider = ({ children }) => {
         completeSimulation,
         completePronunciationPractice,
         addTranslationToHistory,
-        resetProgress
+        resetProgress,
+        login,
+        signup,
+        logout
       }}
     >
       {children}

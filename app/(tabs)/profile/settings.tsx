@@ -17,6 +17,7 @@ import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
   const {
+    name,
     username,
     password,
     learningLanguage,
@@ -25,11 +26,13 @@ export default function SettingsScreen() {
     accentColor,
     notificationsEnabled,
     updateProfile,
-    resetProgress
+    resetProgress,
+    logout
   } = useContext(ProfileContext);
 
   const router = useRouter();
 
+  const [localName, setLocalName] = useState(name || '');
   const [localUsername, setLocalUsername] = useState(username);
   const [localPassword, setLocalPassword] = useState(password);
   const [localLang, setLocalLang] = useState(learningLanguage);
@@ -57,6 +60,7 @@ export default function SettingsScreen() {
     }
 
     updateProfile({
+      name: localName.trim(),
       username: localUsername.trim(),
       password: localPassword.trim(),
       learningLanguage: localLang,
@@ -66,30 +70,44 @@ export default function SettingsScreen() {
       notificationsEnabled: localNotif
     });
 
-    Alert.alert(
-      'Settings Saved',
-      'Your preferences have been successfully updated!',
-      [{ text: 'OK', onPress: () => router.back() }]
-    );
+    if (Platform.OS === 'web') {
+      alert('Your preferences have been successfully updated!');
+      router.back();
+    } else {
+      Alert.alert(
+        'Settings Saved',
+        'Your preferences have been successfully updated!',
+        [{ text: 'OK', onPress: () => router.back() }]
+      );
+    }
   };
 
   const handleReset = () => {
-    Alert.alert(
-      'Reset Progress?',
-      'This will erase all achievements, XP, levels, and saved phrases.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Reset Everything', 
-          style: 'destructive',
-          onPress: () => {
-            resetProgress();
-            Alert.alert("Reset Complete", "All data has been cleared.");
-            router.replace('/');
+    if (Platform.OS === 'web') {
+      const confirmReset = window.confirm('Reset Progress?\n\nThis will erase all achievements, XP, levels, and saved phrases.');
+      if (confirmReset) {
+        resetProgress();
+        alert("All data has been cleared.");
+        router.replace('/');
+      }
+    } else {
+      Alert.alert(
+        'Reset Progress?',
+        'This will erase all achievements, XP, levels, and saved phrases.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Reset Everything', 
+            style: 'destructive',
+            onPress: () => {
+              resetProgress();
+              Alert.alert("Reset Complete", "All data has been cleared.");
+              router.replace('/');
+            }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (
@@ -119,17 +137,32 @@ export default function SettingsScreen() {
           <View style={styles.formContainer}>
             <Text style={styles.sectionHeader}>Account Information</Text>
 
+            {/* Display Name */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Display Name</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter display name"
+                  value={localName}
+                  onChangeText={setLocalName}
+                  autoCapitalize="words"
+                />
+              </View>
+            </View>
+
             {/* Username */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Username</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                <Ionicons name="at-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter username"
                   value={localUsername}
                   onChangeText={setLocalUsername}
-                  autoCapitalize="words"
+                  autoCapitalize="none"
                 />
               </View>
             </View>
@@ -253,6 +286,17 @@ export default function SettingsScreen() {
               activeOpacity={0.85}
             >
               <Text style={styles.resetButtonText}>Reset Progress</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={() => {
+                logout();
+                router.replace('/login');
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.logoutButtonText}>Log Out</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -449,5 +493,19 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     fontSize: 15,
     fontWeight: '700',
-    }
+  },
+  logoutButton: {
+    borderColor: '#2563EB',
+    borderWidth: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  logoutButtonText: {
+    color: '#2563EB',
+    fontSize: 15,
+    fontWeight: '700',
+  }
 });

@@ -5,8 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../context/ProfileContext';
 
 export default function ProfileHeader() {
-  const { username, learningLanguage } = useContext(ProfileContext);
+  const { name, username, learningLanguage } = useContext(ProfileContext);
   const router = useRouter();
+  const displayName = name || username;
 
   const languageFlags = {
     Spanish: '🇪🇸',
@@ -30,11 +31,11 @@ export default function ProfileHeader() {
     <View style={styles.headerContainer}>
       <View style={styles.profileSection}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{getInitials(username)}</Text>
+          <Text style={styles.avatarText}>{getInitials(displayName)}</Text>
         </View>
         <View style={styles.profileTextContainer}>
           <Text style={styles.greetingText}>Hello</Text>
-          <Text style={styles.usernameText}>{username}</Text>
+          <Text style={styles.usernameText}>{displayName}</Text>
           <View style={styles.languageBadge}>
             <Text style={styles.languageFlag}>
               {languageFlags[learningLanguage] || '🌐'}
