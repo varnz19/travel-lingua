@@ -1,43 +1,56 @@
+import React from 'react';
 import { Tabs } from 'expo-router';
-import { BookOpen, Home, MessageSquare, User } from 'lucide-react-native';
-import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Home, BookOpen, Languages, User } from 'lucide-react-native';
+import { Platform, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
+import { TravelTheme } from '../../constants/TravelTheme';
+import { HapticsManager } from '../../utils/HapticsManager';
 
-const C = {
-  primary: '#6C63FF',
-  primaryLight: '#F4F2FF',
-  inactive: '#B8B8CC',
-  white: '#FFFFFF',
-  shadow: '#1B1B2F',
-};
+const T = TravelTheme.colors;
 
-const getTabIcon = (name: string, isFocused: boolean, color: string) => {
-  const props = { size: 24, color, strokeWidth: isFocused ? 2.5 : 2 };
-  switch (name) {
-    case 'index': return <Home {...props} />;
-    case 'learn': return <BookOpen {...props} />;
-    case 'simulate': return <MessageSquare {...props} />;
-    case 'profile': return <User {...props} />;
-    default: return <Home {...props} />;
-  }
-};
+// Explicit 4-tab sequence: Home, Learn, Translate, Profile
+const PRIMARY_TABS = [
+  {
+    name: 'index',
+    label: 'Home',
+    icon: (props: any) => <Home {...props} />,
+  },
+  {
+    name: 'survival',
+    label: 'Learn',
+    icon: (props: any) => <BookOpen {...props} />,
+  },
+  {
+    name: 'practice',
+    label: 'Translate',
+    icon: (props: any) => <Languages {...props} />,
+  },
+  {
+    name: 'profile',
+    label: 'Profile',
+    icon: (props: any) => <User {...props} />,
+  },
+];
 
 function PremiumTabBar({ state, descriptors, navigation }: any) {
+  const currentRouteName = state.routes[state.index]?.name;
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.bar}>
-        {state.routes.map((route: any, index: number) => {
-          if (route.name === 'explore') return null;
-
-          const isFocused = state.index === index;
+        {PRIMARY_TABS.map((tab) => {
+          const isFocused = currentRouteName === tab.name;
+          const color = isFocused ? T.postmark : T.textMuted;
 
           const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
+            HapticsManager.light();
+            if (!isFocused) {
+              navigation.navigate(tab.name);
+            }
           };
 
           return (
             <TouchableOpacity
-              key={route.key}
+              key={tab.name}
               onPress={onPress}
               style={styles.tab}
               activeOpacity={0.7}
@@ -45,8 +58,11 @@ function PremiumTabBar({ state, descriptors, navigation }: any) {
               accessibilityState={isFocused ? { selected: true } : {}}
             >
               <View style={[styles.iconPill, isFocused && styles.iconPillActive]}>
-                {getTabIcon(route.name, isFocused, isFocused ? C.primary : C.inactive)}
+                {tab.icon({ size: 20, color, strokeWidth: isFocused ? 2.5 : 1.8 })}
               </View>
+              <Text style={[styles.tabLabel, isFocused && styles.tabLabelActive]}>
+                {tab.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -61,11 +77,11 @@ export default function TabLayout() {
       tabBar={(props) => <PremiumTabBar {...props} />}
       screenOptions={{ headerShown: false }}
     >
-      <Tabs.Screen name="index" />
-      <Tabs.Screen name="learn" />
-      <Tabs.Screen name="simulate" />
-      <Tabs.Screen name="profile" />
-      <Tabs.Screen name="explore" />
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="survival" options={{ title: 'Learn' }} />
+      <Tabs.Screen name="practice" options={{ title: 'Translate' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="simulate" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -73,37 +89,45 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 28 : 20,
-    left: 32,
-    right: 32,
+    bottom: Platform.OS === 'ios' ? 20 : 12,
+    left: 20,
+    right: 20,
   },
   bar: {
     flexDirection: 'row',
-    backgroundColor: C.white,
-    borderRadius: 36,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    backgroundColor: T.surface,
+    borderRadius: 22,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowColor: C.shadow,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-    elevation: 10,
+    borderColor: T.sandLine,
+    borderWidth: 1,
+    ...TravelTheme.shadows.raised,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
   iconPill: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconPillActive: {
-    backgroundColor: C.primaryLight,
+    backgroundColor: T.primaryLight,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    color: T.textMuted,
+  },
+  tabLabelActive: {
+    color: T.postmark,
+    fontFamily: 'Inter_700Bold',
   },
 });

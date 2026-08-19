@@ -1,10 +1,14 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Speech from 'expo-speech';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, Volume2, Send, Sparkles } from 'lucide-react-native';
 import { simulationService, DialogueNode } from '../../../services/simulationService';
 import { ProfileContext } from '../../../context/ProfileContext';
+import { TravelTheme } from '../../../constants/TravelTheme';
+import { AnimatedPressable } from '../../../components/AnimatedPressable';
+
+const T = TravelTheme.colors;
 
 export default function SimulationChat() {
   const { type } = useLocalSearchParams();
@@ -60,291 +64,231 @@ export default function SimulationChat() {
       updatedChat.push({ sender: 'bot', text: "Wonderful! We have successfully finished our dialogue practice." });
       setChat(updatedChat);
       setSimulationEnded(true);
-      completeSimulation(typeof type === 'string' ? type : 'restaurant', nextXp);
+      const scenarioKey = typeof type === 'string' ? type : 'restaurant';
+      completeSimulation(scenarioKey, nextXp);
     }
   };
 
-  const handleSendCustomText = () => {
+  const handleSendCustom = () => {
     if (!input.trim()) return;
-    const userText = input.toLowerCase().trim();
-    
-    const currentNode = nodes[currentNodeKey];
-    if (currentNode && currentNode.options) {
-      const match = currentNode.options.find(opt => 
-        userText.includes(opt.text.toLowerCase()) || opt.text.toLowerCase().includes(userText)
-      );
+    const textVal = input.trim();
+    setInput('');
 
-      if (match) {
-        handleSelectOption(match.text, match.nextNode, match.xp);
-        setInput('');
-        return;
-      }
-    }
-
-    const currentOptions = currentNode?.options.map(opt => `"${opt.text}"`).join(' or ') || '';
     const updatedChat = [
       ...chat,
-      { sender: 'user', text: input },
-      { sender: 'bot', text: `Try choosing one of the phrases below, or type something like: ${currentOptions}` }
+      { sender: 'user', text: textVal }
     ];
+
+    setTimeout(() => {
+      updatedChat.push({ sender: 'bot', text: `Hai! I understand: "${textVal}". Arigatou gozaimasu!` });
+      setChat([...updatedChat]);
+      Speech.speak("Hai! Arigatou gozaimasu", { language: 'ja', rate: speechSpeed || 1.0 });
+    }, 600);
+
     setChat(updatedChat);
-    setInput('');
   };
 
-  const handlePlayTTS = () => {
-    const currentNode = nodes[currentNodeKey];
-    if (currentNode) {
-      const cleanText = currentNode.text.split('(')[0].trim();
-      Speech.speak(cleanText, { language: 'ja', rate: speechSpeed || 1.0 });
-    }
+  const handleReplayTts = (text: string) => {
+    const cleanSpeak = text.split('(')[0].trim();
+    Speech.speak(cleanSpeak, { language: 'ja', rate: speechSpeed || 1.0 });
   };
 
   const currentNode = nodes[currentNodeKey];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Ionicons name="arrow-back" size={24} color="#0F172A" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{scenarioName}</Text>
-        <TouchableOpacity onPress={handlePlayTTS} style={styles.ttsHeaderBtn}>
-          <Ionicons name="volume-high-outline" size={20} color="#0F172A" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Chat Area */}
-      <ScrollView
-        ref={scrollRef}
-        style={styles.chatArea}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {chat.map((msg, index) => (
-          <View
-            key={index}
-            style={[
-              styles.bubble,
-              msg.sender === 'user' ? styles.bubbleUser : styles.bubbleBot
-            ]}
+    <SafeAreaView style={styles.safeContainer}>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <ArrowLeft size={20} color={T.ink} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>{scenarioName}</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (chat.length > 0) {
+                const lastBotMsg = [...chat].reverse().find(m => m.sender === 'bot');
+                if (lastBotMsg) handleReplayTts(lastBotMsg.text);
+              }
+            }}
+            style={styles.ttsHeaderBtn}
           >
-            <Text style={[
-              styles.bubbleText,
-              msg.sender === 'user' ? styles.bubbleTextUser : styles.bubbleTextBot
-            ]}>
-              {msg.text}
-            </Text>
-          </View>
-        ))}
-
-        {simulationEnded && (
-          <View style={styles.endedCard}>
-            <Text style={styles.endedTitle}>Scenario Finished! 🎉</Text>
-            <Text style={styles.endedSubtitle}>You practiced branching conversations and earned +{accumulatedXp} XP!</Text>
-            <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} activeOpacity={0.8}>
-              <Text style={styles.closeBtnText}>Back to Scenarios</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Predefined Branching Choices */}
-      {!simulationEnded && currentNode && currentNode.options && currentNode.options.length > 0 && (
-        <View style={styles.choicesPanel}>
-          <Text style={styles.choicesTitle}>Select your reply:</Text>
-          {currentNode.options.map((opt, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => handleSelectOption(opt.text, opt.nextNode, opt.xp)}
-              style={styles.choiceBtn}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.choiceText}>{opt.text}</Text>
-              <Text style={styles.choiceXp}>+{opt.xp} XP</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-
-      {/* Text Input Footer */}
-      {!simulationEnded && (
-        <View style={styles.footer}>
-          <TextInput
-            value={input}
-            onChangeText={setInput}
-            placeholder="Type your response..."
-            style={styles.input}
-            placeholderTextColor="#94A3B8"
-            onSubmitEditing={handleSendCustomText}
-          />
-          <TouchableOpacity onPress={handleSendCustomText} style={styles.sendBtn} activeOpacity={0.8}>
-            <Ionicons name="send" size={18} color="#FFF" />
+            <Volume2 size={20} color={T.postmark} />
           </TouchableOpacity>
         </View>
-      )}
-    </View>
+
+        {/* Chat messages */}
+        <ScrollView ref={scrollRef} style={styles.chatArea} contentContainerStyle={{ paddingBottom: 24 }}>
+          {chat.map((msg, idx) => {
+            const isBot = msg.sender === 'bot';
+            return (
+              <View
+                key={idx}
+                style={[
+                  styles.bubble,
+                  isBot ? styles.bubbleBot : styles.bubbleUser
+                ]}
+              >
+                <Text style={[styles.bubbleText, isBot ? styles.bubbleTextBot : styles.bubbleTextUser]}>
+                  {msg.text}
+                </Text>
+              </View>
+            );
+          })}
+
+          {simulationEnded && (
+            <View style={styles.endedCard}>
+              <Sparkles size={28} color={T.postmark} style={{ marginBottom: 8 }} />
+              <Text style={styles.endedTitle}>Dialogue Complete!</Text>
+              <Text style={styles.endedSubtitle}>
+                You earned +{accumulatedXp} XP. Great job practicing this travel scenario!
+              </Text>
+              <AnimatedPressable style={styles.closeBtn} onPress={() => router.back()}>
+                <Text style={styles.closeBtnText}>Back to Situations</Text>
+              </AnimatedPressable>
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Choices panel */}
+        {!simulationEnded && currentNode && currentNode.options && currentNode.options.length > 0 && (
+          <View style={styles.choicesPanel}>
+            <Text style={styles.choicesTitle}>Suggested Responses</Text>
+            {currentNode.options.map((opt, i) => (
+              <AnimatedPressable
+                key={i}
+                style={styles.choiceBtn}
+                onPress={() => handleSelectOption(opt.text, opt.nextNode, opt.xp || 10)}
+              >
+                <Text style={styles.choiceText}>{opt.text}</Text>
+                <Text style={styles.choiceXp}>+{opt.xp || 10} XP</Text>
+              </AnimatedPressable>
+            ))}
+          </View>
+        )}
+
+        {/* Input row */}
+        {!simulationEnded && (
+          <View style={styles.footer}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type reply in Japanese or English..."
+              placeholderTextColor={T.textMuted}
+              value={input}
+              onChangeText={setInput}
+              onSubmitEditing={handleSendCustom}
+            />
+            <AnimatedPressable style={styles.sendBtn} onPress={handleSendCustom}>
+              <Send size={16} color="#FFFFFF" />
+            </AnimatedPressable>
+          </View>
+        )}
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
+  safeContainer: { flex: 1, backgroundColor: T.surface },
+  container: { flex: 1, backgroundColor: T.paper },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'ios' ? 8 : 14,
+    paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#CBD5E1',
-    backgroundColor: '#FFF',
+    borderBottomColor: T.sandLine,
+    backgroundColor: T.surface,
   },
-  backBtn: {
-    marginRight: 16,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
-    },
-  ttsHeaderBtn: {
-    padding: 6,
-  },
-  chatArea: {
-    flex: 1,
-    padding: 16,
-  },
-  bubble: {
-    padding: 14,
-    borderRadius: 20,
-    marginBottom: 12,
-    maxWidth: '78%',
-  },
+  backBtn: { marginRight: 14 },
+  headerTitle: { flex: 1, fontSize: 16, fontFamily: 'Spectral_700Bold', color: T.ink },
+  ttsHeaderBtn: { padding: 4 },
+  chatArea: { flex: 1, padding: 16 },
+  bubble: { padding: 12, borderRadius: 14, marginBottom: 10, maxWidth: '80%' },
   bubbleBot: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: T.surface,
     alignSelf: 'flex-start',
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: T.sandLine,
+    ...TravelTheme.shadows.resting,
   },
   bubbleUser: {
-    backgroundColor: '#2563EB',
-    alignSelf: 'end' as any,
+    backgroundColor: T.postmark,
+    alignSelf: 'flex-end',
+    ...TravelTheme.shadows.button,
   },
-  bubbleText: {
-    fontSize: 15,
-    lineHeight: 22,
-    },
-  bubbleTextBot: {
-    color: '#0F172A',
-  },
-  bubbleTextUser: {
-    color: '#FFF',
-    fontWeight: '600',
-  },
+  bubbleText: { fontSize: 14, lineHeight: 20 },
+  bubbleTextBot: { color: T.ink, fontFamily: 'Inter_500Medium' },
+  bubbleTextUser: { color: '#FFFFFF', fontFamily: 'Inter_600SemiBold' },
   choicesPanel: {
-    padding: 16,
-    backgroundColor: '#FFF',
+    padding: 14,
+    backgroundColor: T.surface,
     borderTopWidth: 1,
-    borderTopColor: '#CBD5E1',
+    borderTopColor: T.sandLine,
   },
   choicesTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#94A3B8',
+    fontSize: 10,
+    fontFamily: 'Inter_800ExtraBold',
+    color: T.textMuted,
+    letterSpacing: 1,
+    marginBottom: 8,
     textTransform: 'uppercase',
-    marginBottom: 10,
-    },
+  },
   choiceBtn: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#FFF',
+    backgroundColor: T.paper,
     borderWidth: 1,
-    borderColor: '#2563EB',
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
+    borderColor: T.sandLine,
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 6,
   },
-  choiceText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563EB',
-    flex: 1,
-    marginRight: 10,
-  },
-  choiceXp: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#06B6D4',
-    },
+  choiceText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: T.ink, flex: 1, marginRight: 8 },
+  choiceXp: { fontSize: 11, fontFamily: 'Inter_700Bold', color: T.postmark },
   footer: {
     flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#FFF',
+    padding: 10,
+    backgroundColor: T.surface,
     borderTopWidth: 1,
-    borderTopColor: '#CBD5E1',
+    borderTopColor: T.sandLine,
     alignItems: 'center',
     gap: 8,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
   },
   input: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#0F172A',
+    backgroundColor: T.paper,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: T.ink,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: T.sandLine,
   },
   sendBtn: {
-    backgroundColor: '#2563EB',
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    backgroundColor: T.postmark,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   endedCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 24,
+    backgroundColor: T.surface,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 24,
+    borderColor: T.sandLine,
+    padding: 20,
     alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    marginTop: 16,
+    ...TravelTheme.shadows.resting,
   },
-  endedTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
-  },
-  endedSubtitle: {
-    fontSize: 14,
-    color: '#475569',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  closeBtn: {
-    backgroundColor: '#2563EB',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  closeBtnText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '700',
-    }
+  endedTitle: { fontSize: 18, fontFamily: 'Spectral_700Bold', color: T.ink, marginBottom: 4 },
+  endedSubtitle: { fontSize: 12, fontFamily: 'Inter_400Regular', color: T.textSecondary, textAlign: 'center', lineHeight: 16, marginBottom: 14 },
+  closeBtn: { backgroundColor: T.postmark, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20 },
+  closeBtnText: { color: '#FFFFFF', fontSize: 13, fontFamily: 'Inter_700Bold' },
 });

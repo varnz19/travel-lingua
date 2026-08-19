@@ -24,12 +24,25 @@ const DEFAULT_STATE = {
   accentColor: '#8B5CF6',
   notificationsEnabled: true,
 
-  // Trip Planner
+  // Trip Planner & Survival Config
   trip: {
     destination: 'Tokyo, Japan',
-    departureDate: '2026-11-10',
+    departureDate: '2026-08-25', // ISO YYYY-MM-DD
     duration: '14 days',
-    purpose: 'Tourism'
+    purpose: 'Tourism',
+    tripType: 'backpacking', // 'business' | 'backpacking' | 'family' | 'romantic' | 'tourism'
+    isCompleted: false,
+  },
+
+  // Offline Downloaded Packs (pack IDs)
+  downloadedPacks: ['pack_emergency', 'pack_arrival'],
+
+  // Practice & Mastery Tracking
+  practicedPhrases: {
+    'sp_e1': { attempts: 3, lastScore: 92 },
+    'sp_g1': { attempts: 5, lastScore: 98 },
+    'sp_g2': { attempts: 2, lastScore: 85 },
+    'sp_d2': { attempts: 1, lastScore: 78 }
   },
 
   // Gamification & Progress
@@ -41,7 +54,7 @@ const DEFAULT_STATE = {
   lessonsCompleted: 3,
   simulationsCompleted: 1,
   flashcardsLearned: 5,
-  pronunciationPractices: 2,
+  pronunciationPractices: 4,
 
   // Checklist of Daily Goals
   dailyGoals: [
@@ -346,7 +359,149 @@ export const ProfileProvider = ({ children }) => {
     });
   };
 
-  // 9. Reset progress entirely
+  // 9. Toggle Download Offline Pack
+  const toggleDownloadPack = (packId) => {
+    const current = state.downloadedPacks || [];
+    const exists = current.includes(packId);
+    const updated = exists ? current.filter(id => id !== packId) : [...current, packId];
+    saveState({
+      ...state,
+      downloadedPacks: updated
+    });
+  };
+
+  // 10. Record Practice Result for a Phrase
+  const recordPracticeResult = (phraseId, score) => {
+    const currentMap = state.practicedPhrases || {};
+    const existing = currentMap[phraseId] || { attempts: 0, lastScore: 0 };
+    const updatedMap = {
+      ...currentMap,
+      [phraseId]: {
+        attempts: existing.attempts + 1,
+        lastScore: score
+      }
+    };
+    const newState = {
+      ...state,
+      practicedPhrases: updatedMap,
+      pronunciationPractices: (state.pronunciationPractices || 0) + 1,
+      xp: (state.xp || 0) + Math.round(score / 5)
+    };
+    saveState(newState);
+  };
+
+  // 11. Days Until Departure
+  const getDaysUntilDeparture = () => {
+    if (!state.trip?.departureDate) return 7;
+    const dep = new Date(state.trip.departureDate).getTime();
+    const now = new Date().getTime();
+    const diff = Math.ceil((dep - now) / (1000 * 3600 * 24));
+    return diff > 0 ? diff : 0;
+  };
+
+  // 12. Calculate Scenario-by-Scenario Readiness
+  const calculateScenarioReadiness = () => {
+    const map = state.practicedPhrases || {};
+    const count = Object.keys(map).length;
+    const downloaded = state.downloadedPacks || [];
+
+    // Calculate average practice score
+    const scores = Object.values(map).map(p => p.lastScore || p.score || 85);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 88;
+
+    return [
+      {
+        key: 'intro',
+        title: 'Greetings & Introduction',
+        icon: '👋',
+        ready: true,
+        masteredCount: 3,
+        totalCount: 3,
+        accuracy: Math.max(88, avgScore),
+        status: 'ready',
+        statusText: '3/3 Mastered'
+      },
+      {
+        key: 'food',
+        title: 'Food & Drinks',
+        icon: '🍙',
+        ready: count >= 1,
+        masteredCount: count >= 1 ? 3 : 1,
+        totalCount: 4,
+        accuracy: Math.max(82, avgScore),
+        status: count >= 1 ? 'ready' : 'needs_practice',
+        statusText: count >= 1 ? '3/4 Mastered' : '1/4 Mastered'
+      },
+      {
+        key: 'restaurant',
+        title: 'Restaurant & Dining',
+        icon: '🍜',
+        ready: count >= 2,
+        masteredCount: count >= 2 ? 3 : 1,
+        totalCount: 3,
+        accuracy: Math.max(80, avgScore),
+        status: count >= 2 ? 'ready' : 'needs_practice',
+        statusText: count >= 2 ? '3/3 Mastered' : '1/3 Mastered'
+      },
+      {
+        key: 'airport',
+        title: 'Airport & Flight',
+        icon: '✈️',
+        ready: downloaded.includes('pack_airport') || count >= 2,
+        masteredCount: downloaded.includes('pack_airport') ? 4 : 2,
+        totalCount: 4,
+        accuracy: 90,
+        status: (downloaded.includes('pack_airport') || count >= 2) ? 'ready' : 'needs_practice',
+        statusText: downloaded.includes('pack_airport') ? 'Offline Pack Cached' : '2/4 Practiced'
+      },
+      {
+        key: 'shops',
+        title: 'Shops & Tax-Free Paying',
+        icon: '🛍️',
+        ready: count >= 3,
+        masteredCount: count >= 3 ? 3 : 1,
+        totalCount: 3,
+        accuracy: Math.max(84, avgScore),
+        status: count >= 3 ? 'ready' : 'needs_practice',
+        statusText: count >= 3 ? '3/3 Mastered' : '1/3 Mastered'
+      },
+      {
+        key: 'hotel',
+        title: 'Hotel & Luggage',
+        icon: '🏨',
+        ready: count >= 2,
+        masteredCount: count >= 2 ? 3 : 1,
+        totalCount: 3,
+        accuracy: 86,
+        status: count >= 2 ? 'ready' : 'needs_practice',
+        statusText: count >= 2 ? '3/3 Mastered' : '1/3 Mastered'
+      },
+      {
+        key: 'directions',
+        title: 'Directions & Subway',
+        icon: '🗺️',
+        ready: count >= 3,
+        masteredCount: count >= 3 ? 4 : 2,
+        totalCount: 4,
+        accuracy: 85,
+        status: count >= 3 ? 'ready' : 'needs_practice',
+        statusText: count >= 3 ? '4/4 Mastered' : '2/4 Mastered'
+      },
+      {
+        key: 'emergency',
+        title: 'Emergency & Police Box',
+        icon: '🚨',
+        ready: downloaded.includes('pack_emergency') || count >= 1,
+        masteredCount: downloaded.includes('pack_emergency') ? 4 : 2,
+        totalCount: 4,
+        accuracy: 94,
+        status: (downloaded.includes('pack_emergency') || count >= 1) ? 'ready' : 'needs_practice',
+        statusText: downloaded.includes('pack_emergency') ? 'Offline Audio Cached' : '2/4 Practiced'
+      }
+    ];
+  };
+
+  // 13. Reset progress entirely
   const resetProgress = () => {
     saveState(DEFAULT_STATE);
   };
@@ -428,6 +583,10 @@ export const ProfileProvider = ({ children }) => {
         completeSimulation,
         completePronunciationPractice,
         addTranslationToHistory,
+        toggleDownloadPack,
+        recordPracticeResult,
+        getDaysUntilDeparture,
+        calculateScenarioReadiness,
         resetProgress,
         login,
         signup,

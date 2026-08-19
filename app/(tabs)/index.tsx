@@ -1,209 +1,311 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   SafeAreaView,
   ScrollView,
-  TouchableOpacity,
+  Image,
   Platform,
+  RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ProfileContext } from '../../context/ProfileContext';
+import { TravelTheme } from '../../constants/TravelTheme';
+import { AnimatedPressable } from '../../components/AnimatedPressable';
+import { HapticsManager } from '../../utils/HapticsManager';
 import {
   Plane,
-  Utensils,
-  Briefcase,
-  BookOpen,
-  MessageCircle,
-  Globe,
-  CheckCircle2,
-  ArrowRight
+  ArrowRight,
+  MapPin,
+  Calendar,
+  Volume2,
+  VolumeX,
+  Languages,
+  Camera,
+  MessageSquare,
+  Sparkles,
+  Shield,
 } from 'lucide-react-native';
+import * as Speech from 'expo-speech';
 
-const C = {
-  bg: '#FAFAFC',
-  primary: '#6C63FF',
-  primaryLight: '#F4F2FF',
-  mint: '#EEF9F3',
-  peach: '#FFF2EC',
-  textPrimary: '#1B1B2F',
-  textSecondary: '#7B7B93',
-  white: '#FFFFFF',
-  success: '#58C98A',
-  card: '#FFFFFF',
-  divider: '#F0EFF8',
-};
+const T = TravelTheme.colors;
 
-const typography: any = {
-  h1: { fontFamily: 'Inter_800ExtraBold', fontSize: 34, letterSpacing: -0.5 },
-  h2: { fontFamily: 'Inter_700Bold', fontSize: 24, letterSpacing: -0.5 },
-  h3: { fontFamily: 'Inter_700Bold', fontSize: 20 },
-  h4: { fontFamily: 'Inter_700Bold', fontSize: 18 },
-  subtitle1: { fontFamily: 'Inter_600SemiBold', fontSize: 16 },
-  subtitle2: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  body1: { fontFamily: 'Inter_400Regular', fontSize: 16 },
-  body2: { fontFamily: 'Inter_500Medium', fontSize: 14 },
-  caption: { fontFamily: 'Inter_500Medium', fontSize: 12 },
-  overline: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
-};
+// High-resolution curated travel photography
+const DESTINATION_BANNER = 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1000&q=80';
+const DINING_CARD_IMG = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80';
+const TRANSIT_CARD_IMG = 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=600&q=80';
+const SHOPPING_CARD_IMG = 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?auto=format&fit=crop&w=600&q=80';
+const HOTEL_CARD_IMG = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80';
 
 export default function HomeScreen() {
   const router = useRouter();
   const {
     name,
     username,
-    lessonsCompleted,
-    simulationsCompleted,
-    savedPhrases,
-    streak,
-    dailyGoals,
     trip,
     learningLanguage,
+    getDaysUntilDeparture,
   } = useContext(ProfileContext);
 
-  const readinessScore = Math.min(
-    100,
-    Math.round(
-      (lessonsCompleted * 12) +
-      (simulationsCompleted * 15) +
-      (savedPhrases.length * 4) +
-      (streak * 3)
-    )
-  );
+  const [refreshing, setRefreshing] = useState(false);
+  const [isPlayingDailyAudio, setIsPlayingDailyAudio] = useState(false);
 
-  const getHourGreeting = () => {
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    HapticsManager.light();
+    setTimeout(() => setRefreshing(false), 800);
+  }, []);
+
+  const daysRemaining = getDaysUntilDeparture();
+
+  const getGreeting = () => {
     const h = new Date().getHours();
     if (h < 12) return 'Good Morning';
     if (h < 17) return 'Good Afternoon';
     return 'Good Evening';
   };
 
+  const handleToggleDailyAudio = () => {
+    if (isPlayingDailyAudio) {
+      HapticsManager.light();
+      Speech.stop();
+      setIsPlayingDailyAudio(false);
+      return;
+    }
+
+    HapticsManager.medium();
+    Speech.stop();
+    setIsPlayingDailyAudio(true);
+
+    Speech.speak('Arigatou gozaimasu', {
+      language: 'ja-JP',
+      rate: 0.85,
+      onDone: () => setIsPlayingDailyAudio(false),
+      onStopped: () => setIsPlayingDailyAudio(false),
+      onError: () => setIsPlayingDailyAudio(false),
+    });
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* ── Greeting ─────────────────────────────────── */}
-        <View style={styles.greetingRow}>
-          <View style={styles.greetingText}>
-            <Text style={[typography.subtitle1, { color: C.textSecondary, marginBottom: 4 }]}>{getHourGreeting()}</Text>
-            <Text style={[typography.h1, { color: C.textPrimary, marginBottom: 8 }]}>{name || username}</Text>
-            <Text style={[typography.body1, { color: C.textSecondary }]}>Ready to continue your {learningLanguage} journey?</Text>
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={T.postmark}
+            colors={[T.postmark]}
+          />
+        }
+      >
+        {/* ── Top Header ─────────────────────────────────── */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.greetingSub}>{getGreeting()}</Text>
+            <Text style={styles.greetingName}>{name || username}</Text>
           </View>
-          <View style={styles.greetingBadge}>
-            <Plane size={24} color={C.primary} strokeWidth={2.5} />
+          <View style={styles.destinationBadge}>
+            <MapPin size={15} color={T.postmark} strokeWidth={2.2} />
+            <Text style={styles.destinationBadgeText}>{trip?.destination || 'Tokyo, Japan'}</Text>
           </View>
         </View>
 
-        {/* ── Today's Lesson Hero ───────────────────────── */}
-        <TouchableOpacity
-          style={styles.heroCard}
-          onPress={() => router.push('/learn/flashcards/greetings' as any)}
-          activeOpacity={0.9}
-        >
-          {/* Ticket/Boarding Pass Motif Left Cutout */}
-          <View style={styles.ticketCutoutLeft} />
-          <View style={styles.ticketCutoutRight} />
+        {/* ── Flight Countdown & Destination Hero Banner ──── */}
+        <View style={styles.heroCard}>
+          <Image
+            source={{ uri: DESTINATION_BANNER }}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+          <View style={styles.heroImageOverlay} />
 
-          <View style={styles.heroInner}>
-            <Text style={[typography.overline, { color: 'rgba(255,255,255,0.7)', marginBottom: 8 }]}>TODAY'S LESSON</Text>
-            <Text style={[typography.h2, { color: C.white, marginBottom: 6 }]}>Restaurant Phrases</Text>
-            <Text style={[typography.subtitle2, { color: 'rgba(255,255,255,0.8)', marginBottom: 24 }]}>10 phrases · ~8 min</Text>
+          <View style={styles.heroContent}>
+            <View style={styles.heroTopRow}>
+              <View style={styles.flightPill}>
+                <Plane size={13} color="#FFFFFF" />
+                <Text style={styles.flightPillText}>FLIGHT DEPARTURE</Text>
+              </View>
+              <Text style={styles.departureDateText}>
+                <Calendar size={12} color="#FFFFFF" /> {trip?.departureDate || '2026-08-25'}
+              </Text>
+            </View>
 
-            <View style={styles.heroCtaRow}>
-              <View style={styles.heroCta}>
-                <Text style={[typography.subtitle2, { color: C.primary, marginRight: 6 }]}>Start Learning</Text>
-                <ArrowRight size={16} color={C.primary} strokeWidth={2.5} />
+            <View style={styles.countdownRow}>
+              <Text style={styles.countdownNumber}>{daysRemaining}</Text>
+              <View style={styles.countdownLabelBox}>
+                <Text style={styles.countdownDaysText}>DAYS REMAINING</Text>
+                <Text style={styles.countdownTargetText}>Destination: {trip?.destination || 'Tokyo, Japan'}</Text>
               </View>
             </View>
-          </View>
-          <View style={styles.heroIconWrap}>
-            <Utensils size={64} color="rgba(255,255,255,0.15)" strokeWidth={1.5} />
-          </View>
-        </TouchableOpacity>
 
-        {/* ── Travel Readiness ──────────────────────────── */}
-        <View style={styles.readinessCard}>
-          <View style={styles.readinessTop}>
-            <View>
-              <Text style={[typography.overline, { color: C.textSecondary, marginBottom: 4 }]}>Travel Readiness</Text>
-              <Text style={[typography.h4, { color: C.textPrimary }]}>{trip?.destination || 'Japan'}</Text>
-            </View>
-            <View style={styles.readinessIconCircle}>
-              <Briefcase size={20} color={C.primary} strokeWidth={2.5} />
-            </View>
+            <AnimatedPressable
+              style={styles.heroCtaBtn}
+              onPress={() => {
+                HapticsManager.medium();
+                router.push('/(tabs)/survival' as any);
+              }}
+            >
+              <Text style={styles.heroCtaText}>Browse Essential Phrases</Text>
+              <ArrowRight size={15} color="#FFFFFF" strokeWidth={2.5} />
+            </AnimatedPressable>
           </View>
-          <Text style={[typography.h1, { color: C.primary, fontSize: 42, marginBottom: 16 }]}>{readinessScore}%</Text>
-          <View style={styles.progressTrack}>
-            <View style={[styles.progressFill, { width: `${readinessScore}%` as any }]} />
-          </View>
-          <Text style={[typography.body2, { color: C.textSecondary, marginTop: 12 }]}>
-            {readinessScore >= 80 ? "You're almost trip-ready! 🌟" : readinessScore >= 50 ? 'Making great progress.' : 'Keep practicing daily!'}
-          </Text>
         </View>
 
-        {/* ── Quick Actions ─────────────────────────────── */}
-        <Text style={[typography.h3, { color: C.textPrimary, marginBottom: 16 }]}>Quick Actions</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: C.primaryLight }]} onPress={() => router.push('/learn' as any)} activeOpacity={0.8}>
-            <View style={[styles.actionIconBg, { backgroundColor: 'rgba(108,99,255,0.1)' }]}>
-              <BookOpen size={24} color={C.primary} strokeWidth={2.5} />
+        {/* ── Daily Travel Phrase of the Day ──────────────── */}
+        <View style={styles.dailyPhraseCard}>
+          <View style={styles.dailyHeaderRow}>
+            <View style={styles.dailyTag}>
+              <Sparkles size={12} color={T.postmark} />
+              <Text style={styles.dailyTagText}>PHRASE OF THE DAY</Text>
             </View>
-            <Text style={[typography.subtitle2, { color: C.primary }]}>Learn</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.audioPillBtn, isPlayingDailyAudio && styles.audioPillBtnActive]}
+              onPress={handleToggleDailyAudio}
+            >
+              {isPlayingDailyAudio ? (
+                <VolumeX size={14} color="#FFFFFF" />
+              ) : (
+                <Volume2 size={14} color={T.postmark} />
+              )}
+              <Text style={[styles.audioPillText, isPlayingDailyAudio && styles.audioPillTextActive]}>
+                {isPlayingDailyAudio ? 'Stop' : 'Listen'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: C.mint }]} onPress={() => router.push('/simulate' as any)} activeOpacity={0.8}>
-            <View style={[styles.actionIconBg, { backgroundColor: 'rgba(88,201,138,0.15)' }]}>
-              <MessageCircle size={24} color="#3DB87A" strokeWidth={2.5} />
-            </View>
-            <Text style={[typography.subtitle2, { color: '#3DB87A' }]}>Practice</Text>
-          </TouchableOpacity>
+          <Text style={styles.dailyJapaneseText}>Arigatou gozaimasu (ありがとうございます)</Text>
 
-          <TouchableOpacity style={[styles.actionCard, { backgroundColor: C.peach }]} onPress={() => router.push('/learn/translator' as any)} activeOpacity={0.8}>
-            <View style={[styles.actionIconBg, { backgroundColor: 'rgba(255,140,115,0.15)' }]}>
-              <Globe size={24} color="#E06845" strokeWidth={2.5} />
-            </View>
-            <Text style={[typography.subtitle2, { color: '#E06845' }]}>Translate</Text>
-          </TouchableOpacity>
+          <View style={[styles.dailyEnglishBox, isPlayingDailyAudio && styles.dailyEnglishBoxActive]}>
+            <Text style={styles.dailyEnglishLabel}>ENGLISH MEANING:</Text>
+            <Text style={styles.dailyEnglishText}>Thank you very much (Polite & universal)</Text>
+          </View>
+
+          <Text style={styles.dailyPhonetic}>🗣️ ah-ree-gah-toh goh-zah-ee-mahs</Text>
         </View>
 
-        {/* ── Daily Goals ───────────────────────────────── */}
-        <Text style={[typography.h3, { color: C.textPrimary, marginBottom: 16 }]}>Daily Goals</Text>
-        <View style={styles.goalsCard}>
-          {dailyGoals.map((goal: any, index: number) => {
-            const isLast = index === dailyGoals.length - 1;
-            const current = goal.current ?? 0;
-            const target = goal.target ?? 1;
-            const progress = goal.type === 'phrases' ? Math.min(1, current / target) : goal.completed ? 1 : 0;
-            const pct = Math.round(progress * 100);
+        {/* ── Quick Travel Tools Shortcut Strip ───────────── */}
+        <Text style={styles.sectionTitle}>Travel Utilities</Text>
+        <Text style={styles.sectionSubtitle}>Quick-access voice translator, camera OCR & dialogues</Text>
 
-            return (
-              <View key={goal.id} style={[styles.goalRow, !isLast && styles.goalRowBorder]}>
-                <View style={styles.goalInfo}>
-                  <View style={styles.goalTitleRow}>
-                    <Text style={[typography.subtitle1, { color: C.textPrimary, flex: 1 }, goal.completed && { color: C.textSecondary, textDecorationLine: 'line-through' }]}>
-                      {goal.label}
-                    </Text>
-                    {goal.completed && (
-                      <View style={styles.donePill}>
-                        <CheckCircle2 size={12} color={C.success} strokeWidth={3} />
-                        <Text style={[typography.overline, { color: C.success, letterSpacing: 0.5, marginLeft: 4 }]}>Done</Text>
-                      </View>
-                    )}
-                  </View>
-                  {!goal.completed && (
-                    <View style={styles.goalProgressRow}>
-                      <View style={styles.goalTrack}>
-                        <View style={[styles.goalFill, { width: `${pct}%` as any }]} />
-                      </View>
-                      <Text style={[typography.caption, { color: C.textSecondary, marginLeft: 12 }]}>
-                        {goal.type === 'phrases' ? `${current}/${target}` : 'Pending'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </View>
-            );
-          })}
+        <View style={styles.toolGrid}>
+          {/* Voice Translator Shortcut */}
+          <AnimatedPressable
+            style={styles.toolCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/practice' as any);
+            }}
+          >
+            <View style={[styles.toolIconBox, { backgroundColor: T.primaryLight }]}>
+              <Languages size={20} color={T.postmark} />
+            </View>
+            <Text style={styles.toolTitle}>Voice Translate</Text>
+            <Text style={styles.toolSub}>Instant speech translation</Text>
+          </AnimatedPressable>
+
+          {/* Camera Scanner Shortcut */}
+          <AnimatedPressable
+            style={styles.toolCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/practice' as any);
+            }}
+          >
+            <View style={[styles.toolIconBox, { backgroundColor: T.secondaryLight }]}>
+              <Camera size={20} color={T.ink} />
+            </View>
+            <Text style={styles.toolTitle}>Sign Scanner</Text>
+            <Text style={styles.toolSub}>Camera OCR extraction</Text>
+          </AnimatedPressable>
+
+          {/* Conversations Shortcut */}
+          <AnimatedPressable
+            style={styles.toolCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/simulate' as any);
+            }}
+          >
+            <View style={[styles.toolIconBox, { backgroundColor: T.successLight }]}>
+              <MessageSquare size={20} color={T.sage} />
+            </View>
+            <Text style={styles.toolTitle}>Conversations</Text>
+            <Text style={styles.toolSub}>Roleplay restaurant & taxi</Text>
+          </AnimatedPressable>
+        </View>
+
+        {/* ── Visual Travel Scenes Gallery ────────────────── */}
+        <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Key Travel Situations</Text>
+        <Text style={styles.sectionSubtitle}>Situations and phrases tailored for your trip</Text>
+
+        <View style={styles.scenesGrid}>
+          {/* Dining */}
+          <AnimatedPressable
+            style={styles.sceneCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/survival' as any);
+            }}
+          >
+            <Image source={{ uri: DINING_CARD_IMG }} style={styles.sceneImage} />
+            <View style={styles.sceneOverlay} />
+            <View style={styles.sceneContent}>
+              <Text style={styles.sceneCategory}>RESTAURANTS & FOOD</Text>
+              <Text style={styles.sceneTitle}>Menus, water & ordering</Text>
+            </View>
+          </AnimatedPressable>
+
+          {/* Airport */}
+          <AnimatedPressable
+            style={styles.sceneCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/survival' as any);
+            }}
+          >
+            <Image source={{ uri: TRANSIT_CARD_IMG }} style={styles.sceneImage} />
+            <View style={styles.sceneOverlay} />
+            <View style={styles.sceneContent}>
+              <Text style={styles.sceneCategory}>AIRPORT & TRANSIT</Text>
+              <Text style={styles.sceneTitle}>Gates, subway & taxis</Text>
+            </View>
+          </AnimatedPressable>
+
+          {/* Shopping */}
+          <AnimatedPressable
+            style={styles.sceneCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/survival' as any);
+            }}
+          >
+            <Image source={{ uri: SHOPPING_CARD_IMG }} style={styles.sceneImage} />
+            <View style={styles.sceneOverlay} />
+            <View style={styles.sceneContent}>
+              <Text style={styles.sceneCategory}>SHOPS & PAYING</Text>
+              <Text style={styles.sceneTitle}>Prices & tax-free cards</Text>
+            </View>
+          </AnimatedPressable>
+
+          {/* Hotel */}
+          <AnimatedPressable
+            style={styles.sceneCard}
+            onPress={() => {
+              HapticsManager.light();
+              router.push('/(tabs)/survival' as any);
+            }}
+          >
+            <Image source={{ uri: HOTEL_CARD_IMG }} style={styles.sceneImage} />
+            <View style={styles.sceneOverlay} />
+            <View style={styles.sceneContent}>
+              <Text style={styles.sceneCategory}>HOTEL & STAY</Text>
+              <Text style={styles.sceneTitle}>Check-in & luggage hold</Text>
+            </View>
+          </AnimatedPressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -211,60 +313,321 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: C.bg },
-  container: { padding: 24, paddingTop: 16, paddingBottom: 120 },
-
-  // Greeting
-  greetingRow: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 32 },
-  greetingText: { flex: 1, paddingRight: 16 },
-  greetingBadge: { width: 48, height: 48, borderRadius: 24, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  safeArea: {
+    flex: 1,
+    backgroundColor: T.paper,
+  },
+  container: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 16 : 24,
+    paddingBottom: 110,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  greetingSub: {
+    fontSize: 11,
+    color: T.textMuted,
+    fontFamily: 'Inter_600SemiBold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  greetingName: {
+    fontSize: 22,
+    color: T.ink,
+    fontFamily: 'Spectral_700Bold',
+    letterSpacing: -0.3,
+  },
+  destinationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: T.surface,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    gap: 4,
+    ...TravelTheme.shadows.resting,
+  },
+  destinationBadgeText: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+    color: T.ink,
+  },
 
   // Hero Card
   heroCard: {
-    backgroundColor: C.primary,
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 24,
+    borderRadius: 14,
+    height: 190,
+    marginBottom: 18,
+    position: 'relative',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    ...TravelTheme.shadows.raised,
+  },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
+  heroImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(27, 42, 47, 0.72)',
+  },
+  heroContent: {
+    flex: 1,
+    padding: 16,
+    justifyContent: 'space-between',
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  flightPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 20, elevation: 6,
+    backgroundColor: 'rgba(196, 68, 46, 0.9)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  flightPillText: {
+    fontSize: 10,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#FFFFFF',
+    letterSpacing: 0.8,
+  },
+  departureDateText: {
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  countdownRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 12,
+  },
+  countdownNumber: {
+    fontSize: 44,
+    fontFamily: 'Spectral_700Bold',
+    color: '#FFFFFF',
+    lineHeight: 46,
+  },
+  countdownLabelBox: {
+    flex: 1,
+  },
+  countdownDaysText: {
+    fontSize: 11,
+    fontFamily: 'Inter_800ExtraBold',
+    color: '#FFFFFF',
+    letterSpacing: 1.2,
+  },
+  countdownTargetText: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 2,
+  },
+  heroCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: T.postmark,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+    ...TravelTheme.shadows.button,
+  },
+  heroCtaText: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+  },
+
+  // Daily Phrase Card
+  dailyPhraseCard: {
+    backgroundColor: T.surface,
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    marginBottom: 22,
+    ...TravelTheme.shadows.resting,
+  },
+  dailyHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dailyTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  dailyTagText: {
+    fontSize: 10,
+    fontFamily: 'Inter_800ExtraBold',
+    color: T.postmark,
+    letterSpacing: 0.8,
+  },
+  audioPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: T.paper,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    gap: 4,
+  },
+  audioPillBtnActive: {
+    backgroundColor: T.postmark,
+    borderColor: T.postmark,
+  },
+  audioPillText: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    color: T.ink,
+  },
+  audioPillTextActive: {
+    color: '#FFFFFF',
+  },
+  dailyJapaneseText: {
+    fontSize: 15,
+    fontFamily: 'Spectral_700Bold',
+    color: T.ink,
+    marginBottom: 6,
+  },
+  dailyEnglishBox: {
+    backgroundColor: T.paper,
+    borderRadius: 8,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    marginBottom: 4,
+  },
+  dailyEnglishBoxActive: {
+    backgroundColor: T.primaryLight,
+    borderColor: T.postmark,
+  },
+  dailyEnglishLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter_800ExtraBold',
+    color: T.postmark,
+    letterSpacing: 0.6,
+    marginBottom: 1,
+  },
+  dailyEnglishText: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+    color: T.ink,
+  },
+  dailyPhonetic: {
+    fontSize: 11,
+    fontFamily: 'Inter_500Medium',
+    color: T.textMuted,
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Spectral_700Bold',
+    color: T.ink,
+    marginBottom: 2,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: T.textSecondary,
+    marginBottom: 12,
+  },
+
+  // Tool Strip
+  toolGrid: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 22,
+  },
+  toolCard: {
+    flex: 1,
+    backgroundColor: T.surface,
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    alignItems: 'center',
+    ...TravelTheme.shadows.resting,
+  },
+  toolIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  toolTitle: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+    color: T.ink,
+    textAlign: 'center',
+  },
+  toolSub: {
+    fontSize: 9,
+    fontFamily: 'Inter_400Regular',
+    color: T.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
+
+  // Scenes Grid
+  scenesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  sceneCard: {
+    width: '48%',
+    height: 110,
+    borderRadius: 12,
+    overflow: 'hidden',
     position: 'relative',
-    overflow: 'hidden'
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    ...TravelTheme.shadows.resting,
   },
-  ticketCutoutLeft: { position: 'absolute', left: -12, top: '50%', marginTop: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: C.bg },
-  ticketCutoutRight: { position: 'absolute', right: -12, top: '50%', marginTop: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: C.bg },
-  heroInner: { flex: 1, zIndex: 1 },
-  heroCtaRow: { flexDirection: 'row' },
-  heroCta: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.white, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 16 },
-  heroIconWrap: { position: 'absolute', right: -10, bottom: -10, zIndex: 0 },
-
-  // Readiness Card
-  readinessCard: {
-    backgroundColor: C.card, borderRadius: 24, padding: 24, marginBottom: 32,
-    shadowColor: C.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 12, elevation: 1,
+  sceneImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
-  readinessTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
-  readinessIconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  progressTrack: { height: 6, backgroundColor: C.primaryLight, borderRadius: 3, overflow: 'hidden' },
-  progressFill: { height: '100%', backgroundColor: C.primary, borderRadius: 3 } as any,
-
-  // Actions
-  actionsRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  actionCard: { flex: 1, borderRadius: 20, padding: 16, alignItems: 'center', justifyContent: 'center', minHeight: 110 },
-  actionIconBg: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-
-  // Goals
-  goalsCard: {
-    backgroundColor: C.card, borderRadius: 24, paddingVertical: 8, paddingHorizontal: 24,
-    shadowColor: C.textPrimary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 12, elevation: 1,
+  sceneOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(27, 42, 47, 0.62)',
   },
-  goalRow: { paddingVertical: 20 },
-  goalRowBorder: { borderBottomWidth: 1, borderBottomColor: C.divider },
-  goalInfo: { flex: 1 },
-  goalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  donePill: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#E8F8F0', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
-  goalProgressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  goalTrack: { flex: 1, height: 6, backgroundColor: C.primaryLight, borderRadius: 3, overflow: 'hidden' },
-  goalFill: { height: '100%', backgroundColor: C.primary, borderRadius: 3 } as any,
-  goalMiniFill: { height: '100%', backgroundColor: C.primary, borderRadius: 2 } as any,
+  sceneContent: {
+    flex: 1,
+    padding: 10,
+    justifyContent: 'flex-end',
+  },
+  sceneCategory: {
+    fontSize: 8,
+    fontFamily: 'Inter_800ExtraBold',
+    color: T.primaryLight,
+    letterSpacing: 0.8,
+  },
+  sceneTitle: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    marginTop: 1,
+  },
 });

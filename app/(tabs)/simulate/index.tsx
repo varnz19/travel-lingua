@@ -16,44 +16,22 @@ import React, { useContext, useEffect, useState } from 'react';
 import {
   SafeAreaView,
   ScrollView, StyleSheet,
-  Text, TouchableOpacity,
+  Text,
   View,
 } from 'react-native';
 import { ProfileContext } from '../../../context/ProfileContext';
 import { Scenario, simulationService } from '../../../services/simulationService';
+import { TravelTheme } from '../../../constants/TravelTheme';
+import { AnimatedPressable } from '../../../components/AnimatedPressable';
 
-const C = {
-  bg: '#FAFAFC',
-  primary: '#6C63FF',
-  primaryLight: '#F4F2FF',
-  mint: '#EEF9F3',
-  peach: '#FFF2EC',
-  textPrimary: '#1B1B2F',
-  textSecondary: '#7B7B93',
-  white: '#FFFFFF',
-  success: '#58C98A',
-  divider: '#F0EFF8',
-};
-
-const typography: any = {
-  h1: { fontFamily: 'Inter_800ExtraBold', fontSize: 34, letterSpacing: -0.5 },
-  h2: { fontFamily: 'Inter_700Bold', fontSize: 24, letterSpacing: -0.5 },
-  h3: { fontFamily: 'Inter_700Bold', fontSize: 20 },
-  h4: { fontFamily: 'Inter_700Bold', fontSize: 18 },
-  subtitle1: { fontFamily: 'Inter_600SemiBold', fontSize: 16 },
-  subtitle2: { fontFamily: 'Inter_600SemiBold', fontSize: 14 },
-  body1: { fontFamily: 'Inter_400Regular', fontSize: 16 },
-  body2: { fontFamily: 'Inter_500Medium', fontSize: 14 },
-  caption: { fontFamily: 'Inter_500Medium', fontSize: 12 },
-  overline: { fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 1.2, textTransform: 'uppercase' },
-};
+const T = TravelTheme.colors;
 
 const DIFFICULTY_STYLES: Record<string, { bg: string; color: string; label: string }> = {
-  beginner: { bg: '#E8F8F0', color: '#3DB87A', label: 'Beginner' },
-  easy: { bg: '#E8F8F0', color: '#3DB87A', label: 'Easy' },
-  intermediate: { bg: '#FFF4E0', color: '#E0963B', label: 'Intermediate' },
-  hard: { bg: '#FDEAEA', color: '#E05555', label: 'Hard' },
-  advanced: { bg: '#FDEAEA', color: '#E05555', label: 'Advanced' },
+  beginner: { bg: T.successLight, color: T.sage, label: 'Beginner' },
+  easy: { bg: T.successLight, color: T.sage, label: 'Easy' },
+  intermediate: { bg: T.primaryLight, color: T.postmark, label: 'Intermediate' },
+  hard: { bg: T.primaryLight, color: T.postmark, label: 'Hard' },
+  advanced: { bg: T.primaryLight, color: T.postmark, label: 'Advanced' },
 };
 
 const getScenarioIcon = (key: string, size: number, color: string) => {
@@ -79,170 +57,109 @@ export default function SimulateScreen() {
     simulationService.getScenarios().then(setScenarios);
   }, []);
 
-  const featured = scenarios[0];
-  const rest = scenarios.slice(1);
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* ── Header ──────────────────────────────────────── */}
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <Text style={[typography.h1, { color: C.textPrimary, marginBottom: 8 }]}>Dialogue Practice</Text>
-          <Text style={[typography.body1, { color: C.textSecondary }]}>Roleplay real travel situations</Text>
+          <Text style={styles.title}>Travel Conversations</Text>
+          <Text style={styles.subtitle}>Practice interactive dialogue for real travel situations</Text>
         </View>
 
-        {/* ── Progress Banner ──────────────────────────────── */}
-        <View style={styles.progressBanner}>
-          <View style={styles.progressBannerLeft}>
-            <View style={styles.progressBannerIconBox}>
-              <Trophy size={20} color={C.primary} strokeWidth={2.5} />
-            </View>
-            <View>
-              <Text style={[typography.subtitle1, { color: C.textPrimary }]}>{simulationsCompleted} Scenarios Completed</Text>
-              <Text style={[typography.caption, { color: C.textSecondary, marginTop: 4 }]}>{scenarios.length} available to practise</Text>
-            </View>
+        {/* Stats banner */}
+        <View style={styles.statsCard}>
+          <View style={styles.statBox}>
+            <Trophy size={18} color={T.postmark} />
+            <Text style={styles.statNumber}>{simulationsCompleted}</Text>
+            <Text style={styles.statLabel}>Completed</Text>
           </View>
-          <Plane size={28} color="rgba(108,99,255,0.2)" strokeWidth={2} style={{ transform: [{ rotate: '45deg' }] }} />
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Star size={18} color={T.sage} />
+            <Text style={styles.statNumber}>100%</Text>
+            <Text style={styles.statLabel}>Accuracy Goal</Text>
+          </View>
         </View>
 
-        {/* ── Featured Scenario ────────────────────────────── */}
-        {featured && (() => {
-          const diff = DIFFICULTY_STYLES[featured.difficulty?.toLowerCase()] || DIFFICULTY_STYLES.intermediate;
+        {/* Situations List */}
+        <Text style={styles.sectionHeader}>Situations & Dialogues</Text>
+        {scenarios.map((sc) => {
+          const diff = DIFFICULTY_STYLES[sc.difficulty.toLowerCase()] || DIFFICULTY_STYLES.easy;
           return (
-            <>
-              <Text style={[typography.overline, { color: C.textSecondary, marginBottom: 14 }]}>FEATURED</Text>
-              <TouchableOpacity
-                style={styles.featuredCard}
-                onPress={() => router.push(`/simulate/chat?type=${featured.key}` as any)}
-                activeOpacity={0.9}
-              >
-                <View style={styles.featuredRow}>
-                  <View style={styles.featuredIconBox}>
-                    {getScenarioIcon(featured.key, 32, C.primary)}
-                  </View>
-                  <View style={styles.featuredMeta}>
-                    <Text style={[typography.h3, { color: C.textPrimary, marginBottom: 10 }]}>{featured.title}</Text>
-                    <View style={styles.badgeRow}>
-                      <View style={[styles.badge, { backgroundColor: diff.bg }]}>
-                        <Text style={[typography.caption, { color: diff.color, fontWeight: '700' }]}>{diff.label}</Text>
-                      </View>
-                      <View style={styles.badgeXP}>
-                        <Star size={12} color={C.textSecondary} strokeWidth={2.5} style={{ marginRight: 4 }} />
-                        <Text style={[typography.caption, { color: C.textSecondary, fontWeight: '700' }]}>+100 XP</Text>
-                      </View>
-                    </View>
-                  </View>
+            <AnimatedPressable
+              key={sc.key}
+              style={styles.scenarioCard}
+              onPress={() => router.push(`/(tabs)/simulate/chat?type=${sc.key}` as any)}
+            >
+              <View style={styles.iconCircle}>
+                {getScenarioIcon(sc.key, 20, T.postmark)}
+              </View>
+              <View style={styles.scenarioDetails}>
+                <Text style={styles.scenarioTitle}>{sc.title}</Text>
+                <Text style={styles.scenarioDesc} numberOfLines={2}>
+                  Interactive branching dialog • {sc.points} XP
+                </Text>
+                <View style={[styles.diffBadge, { backgroundColor: diff.bg }]}>
+                  <Text style={[styles.diffText, { color: diff.color }]}>{diff.label}</Text>
                 </View>
-
-                <View style={styles.featuredCtaRow}>
-                  <View style={styles.startFeaturedBtn}>
-                    <Text style={[typography.subtitle2, { color: C.primary, marginRight: 8 }]}>Start Dialogue</Text>
-                    <ArrowRight size={16} color={C.primary} strokeWidth={2.5} />
-                  </View>
-                </View>
-              </TouchableOpacity>
-            </>
+              </View>
+              <ArrowRight size={16} color={T.sandLine} />
+            </AnimatedPressable>
           );
-        })()}
-
-        {/* ── All Scenarios ────────────────────────────────── */}
-        {rest.length > 0 && (
-          <>
-            <Text style={[typography.overline, { color: C.textSecondary, marginBottom: 14, marginTop: 10 }]}>ALL SCENARIOS</Text>
-            <View style={styles.list}>
-              {rest.map(scene => {
-                const diff = DIFFICULTY_STYLES[scene.difficulty?.toLowerCase()] || DIFFICULTY_STYLES.intermediate;
-                return (
-                  <TouchableOpacity
-                    key={scene.key}
-                    style={styles.scenarioCard}
-                    onPress={() => router.push(`/simulate/chat?type=${scene.key}` as any)}
-                    activeOpacity={0.82}
-                  >
-                    <View style={styles.scenarioIconBox}>
-                      {getScenarioIcon(scene.key, 24, C.primary)}
-                    </View>
-                    <View style={styles.scenarioBody}>
-                      <Text style={[typography.subtitle1, { color: C.textPrimary, marginBottom: 6 }]}>{scene.title}</Text>
-                      <View style={styles.badgeRow}>
-                        <View style={[styles.badge, { backgroundColor: diff.bg }]}>
-                          <Text style={[typography.caption, { color: diff.color, fontWeight: '700' }]}>{diff.label}</Text>
-                        </View>
-                        <View style={styles.badgeXP}>
-                          <Text style={[typography.caption, { color: C.textSecondary, fontWeight: '700' }]}>+100 XP</Text>
-                        </View>
-                      </View>
-                    </View>
-                    <View style={styles.compactBtn}>
-                      <Text style={[typography.subtitle2, { color: C.primary }]}>Start</Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </>
-        )}
-
+        })}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: C.bg },
-  scroll: { padding: 24, paddingBottom: 120 },
-
-  header: { marginBottom: 28, marginTop: 12 },
-
-  progressBanner: {
-    backgroundColor: C.primaryLight,
-    borderRadius: 20,
-    padding: 20,
+  safeArea: { flex: 1, backgroundColor: T.paper },
+  container: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 120 },
+  header: { marginBottom: 16 },
+  title: { fontSize: 24, fontFamily: 'Spectral_700Bold', color: T.ink, letterSpacing: -0.3 },
+  subtitle: { fontSize: 12, fontFamily: 'Inter_500Medium', color: T.textSecondary, marginTop: 2 },
+  statsCard: {
+    flexDirection: 'row',
+    backgroundColor: T.surface,
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    marginBottom: 20,
+    ...TravelTheme.shadows.resting,
+  },
+  statBox: { flex: 1, alignItems: 'center', gap: 2 },
+  statNumber: { fontSize: 20, fontFamily: 'Spectral_700Bold', color: T.ink },
+  statLabel: { fontSize: 10, fontFamily: 'Inter_700Bold', color: T.textMuted, textTransform: 'uppercase' },
+  statDivider: { width: 1, backgroundColor: T.sandLine, height: '70%', alignSelf: 'center' },
+  sectionHeader: { fontSize: 15, fontFamily: 'Spectral_700Bold', color: T.ink, marginBottom: 12 },
+  scenarioCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 32,
+    backgroundColor: T.surface,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(108,99,255,0.1)',
+    borderColor: T.sandLine,
+    marginBottom: 10,
+    ...TravelTheme.shadows.resting,
   },
-  progressBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  progressBannerIconBox: {
-    width: 48, height: 48, borderRadius: 24,
-    backgroundColor: C.white, alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 2,
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: T.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: T.sandLine,
   },
-
-  featuredCard: {
-    backgroundColor: C.white,
-    borderRadius: 24, padding: 24, marginBottom: 24,
-    shadowColor: C.textPrimary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04, shadowRadius: 20, elevation: 3,
+  scenarioDetails: {
+    flex: 1,
+    paddingHorizontal: 12,
   },
-  featuredRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  featuredIconBox: {
-    width: 64, height: 64, borderRadius: 20,
-    backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginRight: 20,
-  },
-  featuredMeta: { flex: 1 },
-  badgeRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  badgeXP: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F3FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-
-  featuredCtaRow: { borderTopWidth: 1, borderTopColor: C.divider, paddingTop: 20, alignItems: 'flex-start' },
-  startFeaturedBtn: { flexDirection: 'row', alignItems: 'center' },
-
-  list: { gap: 16 },
-  scenarioCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.white, borderRadius: 20, padding: 18,
-    shadowColor: C.textPrimary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.03, shadowRadius: 12, elevation: 1,
-  },
-  scenarioIconBox: {
-    width: 52, height: 52, borderRadius: 16,
-    backgroundColor: C.primaryLight, alignItems: 'center', justifyContent: 'center', marginRight: 16,
-  },
-  scenarioBody: { flex: 1 },
-  compactBtn: { backgroundColor: C.primaryLight, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 10, marginLeft: 12 },
+  scenarioTitle: { fontSize: 14, fontFamily: 'Spectral_700Bold', color: T.ink },
+  scenarioDesc: { fontSize: 11, fontFamily: 'Inter_400Regular', color: T.textSecondary, marginTop: 2 },
+  diffBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start', marginTop: 4 },
+  diffText: { fontSize: 9, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.5 },
 });

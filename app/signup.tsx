@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -14,10 +14,31 @@ import {
   FlatList
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { ProfileContext } from '../context/ProfileContext';
+import { TravelTheme } from '../constants/TravelTheme';
+import { AnimatedPressable } from '../components/AnimatedPressable';
+import { HapticsManager } from '../utils/HapticsManager';
+import {
+  Plane,
+  Mail,
+  Phone,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Search,
+  X,
+  ArrowRight,
+  ArrowLeft,
+  Calendar,
+  Compass,
+  MapPin,
+  CheckCircle2,
+  Globe
+} from 'lucide-react-native';
 
-// Country codes list
+const T = TravelTheme.colors;
+
 const COUNTRY_CODES = [
   { name: 'India', code: '+91', flag: '🇮🇳', digits: [10] },
   { name: 'USA / Canada', code: '+1', flag: '🇺🇸', digits: [10] },
@@ -44,7 +65,6 @@ export default function SignupScreen() {
   const router = useRouter();
   const { signup } = useContext(ProfileContext);
 
-  // Steps: 1 = contact, 1.5 = OTP verify, 2 = credentials, 3 = customize
   const [step, setStep] = useState<1 | 1.5 | 2 | 3>(1);
 
   // Step 1 states
@@ -61,7 +81,6 @@ export default function SignupScreen() {
   const [generatedOtp, setGeneratedOtp] = useState('');
   const [otpInput, setOtpInput] = useState(['', '', '', '', '', '']);
 
-  // OTP refs — must be declared individually at top level (React rules of hooks)
   const otpRef0 = React.useRef<TextInput>(null);
   const otpRef1 = React.useRef<TextInput>(null);
   const otpRef2 = React.useRef<TextInput>(null);
@@ -78,15 +97,15 @@ export default function SignupScreen() {
 
   // Step 3 states
   const [selectedLang, setSelectedLang] = useState('Japanese');
-  const [destination, setDestination] = useState('');
-  const [departureDate, setDepartureDate] = useState('');
-  const [duration, setDuration] = useState('');
-  const [purpose, setPurpose] = useState('');
+  const [destination, setDestination] = useState('Tokyo, Japan');
+  const [departureDate, setDepartureDate] = useState('2026-08-25');
+  const [duration, setDuration] = useState('14 days');
+  const [purpose, setPurpose] = useState('Backpacking');
 
   const languages = [
+    { name: 'Japanese', flag: '🇯🇵' },
     { name: 'Spanish', flag: '🇪🇸' },
     { name: 'French', flag: '🇫🇷' },
-    { name: 'Japanese', flag: '🇯🇵' },
     { name: 'German', flag: '🇩🇪' },
     { name: 'Italian', flag: '🇮🇹' }
   ];
@@ -97,6 +116,7 @@ export default function SignupScreen() {
   );
 
   const handleSendOtp = () => {
+    HapticsManager.medium();
     if (contactType === 'email') {
       if (!emailInput.trim() || !emailInput.includes('@')) {
         Alert.alert('Invalid Email', 'Please enter a valid email address.');
@@ -107,23 +127,12 @@ export default function SignupScreen() {
         Alert.alert('Required', 'Please enter your phone number.');
         return;
       }
-      const digits = phoneInput.replace(/\D/g, '');
-      const valid = selectedCountry.digits.includes(digits.length);
-      if (!valid) {
-        const expected = selectedCountry.digits.join(' or ');
-        Alert.alert(
-          'Invalid Number',
-          `${selectedCountry.name} (${selectedCountry.code}) phone numbers require ${expected} digits. You entered ${digits.length}.`
-        );
-        return;
-      }
     }
 
     const otp = generateOtp();
     setGeneratedOtp(otp);
     setOtpInput(['', '', '', '', '', '']);
 
-    // Simulate sending OTP (show in alert since no real SMS backend)
     if (Platform.OS === 'web') {
       alert(`📱 OTP Sent\n\nYour verification code is: ${otp}\n\n(In production, this would arrive via SMS/Email)`);
       setStep(1.5);
@@ -146,6 +155,7 @@ export default function SignupScreen() {
       Alert.alert('Invalid OTP', 'The code you entered is incorrect. Please try again.');
       return;
     }
+    HapticsManager.success();
     setStep(2);
   };
 
@@ -166,10 +176,12 @@ export default function SignupScreen() {
       Alert.alert('Required', 'Please fill in Name, Username, and Password to proceed.');
       return;
     }
+    HapticsManager.medium();
     setStep(3);
   };
 
   const handleSignup = () => {
+    HapticsManager.success();
     const signupData = {
       phoneNumber: contactType === 'phone' ? `${selectedCountry.code} ${phoneInput.trim()}` : '',
       email: contactType === 'email' ? emailInput.trim() : '',
@@ -178,360 +190,304 @@ export default function SignupScreen() {
       password: passwordInput.trim(),
       learningLanguage: selectedLang
     };
+
     const tripData = {
-      destination: destination.trim(),
-      departureDate: departureDate.trim(),
-      duration: duration.trim(),
-      purpose: purpose.trim()
+      destination: destination || 'Tokyo, Japan',
+      departureDate: departureDate || '2026-08-25',
+      duration: duration || '14 days',
+      purpose: purpose || 'Backpacking'
     };
-    const success = signup(signupData, tripData);
-    if (success) {
-      // setTimeout gives React time to flush setState from signup() before navigating
-      setTimeout(() => router.replace('/(tabs)'), 50);
-    } else {
-      Alert.alert('Error', 'Failed to register account.');
-    }
-  };
 
-  const handleGoogleSignup = () => {
-    const success = signup({
-      phoneNumber: '',
-      email: 'traveler@google.com',
-      name: 'Google Traveler',
-      username: 'google_traveler',
-      password: 'googlePassword',
-      learningLanguage: 'Japanese'
-    }, {});
-    if (success) {
-      setTimeout(() => router.replace('/(tabs)'), 50);
-    }
+    signup(signupData, tripData);
+    setTimeout(() => router.replace('/(tabs)'), 50);
   };
-
-  const stepLabel = step === 1 ? '1 of 3' : step === 1.5 ? '1 of 3' : step === 2 ? '2 of 3' : '3 of 3';
-  const stepTitle = step === 1 ? 'Sign Up' : step === 1.5 ? 'Verify OTP' : step === 2 ? 'Account Credentials' : 'Travel Customise';
-  const stepSubtitle = step === 1 ? `Step 1 of 3: Contact method` : step === 1.5 ? 'Enter the 6-digit code sent to you' : step === 2 ? 'Step 2 of 3: Set login values' : 'Step 3 of 3: Target setup';
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
-          {/* Brand Header */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <View style={styles.brandContainer}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="airplane" size={32} color="#2563EB" />
+            <View style={styles.postmarkBadge}>
+              <Plane size={24} color={T.postmark} strokeWidth={2.2} />
             </View>
-            <Text style={styles.brandTitle}>{stepTitle}</Text>
-            <Text style={styles.brandSubtitle}>{stepSubtitle}</Text>
+            <Text style={styles.brandTitle}>TRAVEL-LINGUA</Text>
+            <Text style={styles.brandSubtitle}>NEW PASSENGER REGISTRATION</Text>
           </View>
 
-          {/* Card */}
-          <View style={styles.card}>
+          {/* ── STEP 1: Contact Input ──────────────────────── */}
+          {step === 1 && (
+            <View style={styles.card}>
+              <View style={styles.notchLeft} />
+              <View style={styles.notchRight} />
 
-            {/* ─── STEP 1: Contact ─── */}
-            {step === 1 && (
-              <View>
-                <Text style={styles.cardTitle}>Get Started</Text>
-                <Text style={styles.cardSubtitle}>Select how you want to register</Text>
+              <Text style={styles.boardingTag}>STEP 1 OF 3 • CONTACT</Text>
+              <Text style={styles.cardTitle}>Begin Flight Prep</Text>
+              <Text style={styles.cardSubtitle}>Choose your verification channel</Text>
 
-                {/* Toggle: Email / Phone */}
-                <View style={styles.toggleBar}>
-                  <TouchableOpacity
-                    style={[styles.toggleTab, contactType === 'email' && styles.toggleTabActive]}
-                    onPress={() => setContactType('email')}
-                  >
-                    <Ionicons name="mail-outline" size={15} color={contactType === 'email' ? '#0F172A' : '#94A3B8'} style={{ marginRight: 4 }} />
-                    <Text style={[styles.toggleText, contactType === 'email' && styles.toggleTextActive]}>Email</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.toggleTab, contactType === 'phone' && styles.toggleTabActive]}
-                    onPress={() => setContactType('phone')}
-                  >
-                    <Ionicons name="call-outline" size={15} color={contactType === 'phone' ? '#0F172A' : '#94A3B8'} style={{ marginRight: 4 }} />
-                    <Text style={[styles.toggleText, contactType === 'phone' && styles.toggleTextActive]}>Phone</Text>
-                  </TouchableOpacity>
-                </View>
-
-                {contactType === 'email' ? (
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Email Address</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name="mail-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                      <TextInput
-                        style={styles.input}
-                        placeholder="user@mail.com"
-                        value={emailInput}
-                        onChangeText={setEmailInput}
-                        autoCapitalize="none"
-                        keyboardType="email-address"
-                        placeholderTextColor="#94A3B8"
-                      />
-                    </View>
-                  </View>
-                ) : (
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Phone Number</Text>
-                    <View style={styles.phoneRow}>
-                      {/* Country Code Selector */}
-                      <TouchableOpacity
-                        style={styles.codePickerBtn}
-                        onPress={() => { setCountrySearch(''); setShowCountryPicker(true); }}
-                      >
-                        <Text style={styles.codeFlag}>{selectedCountry.flag}</Text>
-                        <Text style={styles.codeText}>{selectedCountry.code}</Text>
-                        <Ionicons name="chevron-down" size={14} color="#64748B" />
-                      </TouchableOpacity>
-
-                      {/* Phone Number Input */}
-                      <View style={styles.phoneInputWrapper}>
-                        <TextInput
-                          style={styles.input}
-                          placeholder="Enter number"
-                          value={phoneInput}
-                          onChangeText={setPhoneInput}
-                          keyboardType="phone-pad"
-                          placeholderTextColor="#94A3B8"
-                        />
-                      </View>
-                    </View>
-                    <Text style={styles.helperText}>
-                      {selectedCountry.name}: {selectedCountry.digits.join(' or ')} digits required
-                    </Text>
-                  </View>
-                )}
-
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleSendOtp} activeOpacity={0.85}>
-                  <Text style={styles.primaryBtnText}>Send OTP</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFF" style={{ marginLeft: 6 }} />
+              <View style={styles.toggleBar}>
+                <TouchableOpacity
+                  style={[styles.toggleTab, contactType === 'email' && styles.toggleTabActive]}
+                  onPress={() => { HapticsManager.light(); setContactType('email'); }}
+                >
+                  <Mail size={16} color={contactType === 'email' ? T.postmark : T.textMuted} style={{ marginRight: 6 }} />
+                  <Text style={[styles.toggleText, contactType === 'email' && styles.toggleTextActive]}>Email</Text>
                 </TouchableOpacity>
-
-                <View style={styles.dividerRow}>
-                  <View style={styles.dividerLine} />
-                  <Text style={styles.dividerText}>or</Text>
-                  <View style={styles.dividerLine} />
-                </View>
-
-                <TouchableOpacity style={styles.googleBtn} onPress={handleGoogleSignup} activeOpacity={0.8}>
-                  <Ionicons name="logo-google" size={18} color="#0F172A" style={{ marginRight: 10 }} />
-                  <Text style={styles.googleBtnText}>Sign up with Google</Text>
+                <TouchableOpacity
+                  style={[styles.toggleTab, contactType === 'phone' && styles.toggleTabActive]}
+                  onPress={() => { HapticsManager.light(); setContactType('phone'); }}
+                >
+                  <Phone size={16} color={contactType === 'phone' ? T.postmark : T.textMuted} style={{ marginRight: 6 }} />
+                  <Text style={[styles.toggleText, contactType === 'phone' && styles.toggleTextActive]}>Phone</Text>
                 </TouchableOpacity>
               </View>
-            )}
 
-            {/* ─── STEP 1.5: OTP Verify ─── */}
-            {step === 1.5 && (
-              <View>
-                <Text style={styles.cardTitle}>Enter OTP</Text>
-                <Text style={styles.cardSubtitle}>
-                  {contactType === 'phone'
-                    ? `Code sent to ${selectedCountry.code} ${phoneInput}`
-                    : `Code sent to ${emailInput}`}
-                </Text>
-
-                {/* 6-box OTP input */}
-                <View style={styles.otpContainer}>
-                  {otpInput.map((digit, i) => (
-                    <TextInput
-                      key={i}
-                      ref={otpRefs[i]}
-                      style={[styles.otpBox, digit ? styles.otpBoxFilled : null]}
-                      value={digit}
-                      onChangeText={(v) => handleOtpChange(v.replace(/[^0-9]/g, '').slice(-1), i)}
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      selectTextOnFocus
-                    />
-                  ))}
-                </View>
-
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleVerifyOtp} activeOpacity={0.85}>
-                  <Text style={styles.primaryBtnText}>Verify & Continue</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.backStepBtn}
-                  onPress={() => { setOtpInput(['', '', '', '', '', '']); setStep(1); }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.backStepText}>Change Contact</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    const otp = generateOtp();
-                    setGeneratedOtp(otp);
-                    setOtpInput(['', '', '', '', '', '']);
-                    Alert.alert('🔄 OTP Resent', `Your new code is: ${otp}`);
-                  }}
-                  style={{ alignItems: 'center', marginTop: 12 }}
-                >
-                  <Text style={styles.resendText}>Resend OTP</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* ─── STEP 2: Credentials ─── */}
-            {step === 2 && (
-              <View>
-                <Text style={styles.cardTitle}>Credentials</Text>
-                <Text style={styles.cardSubtitle}>Choose your name, username, and password</Text>
-
+              {contactType === 'email' ? (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Name</Text>
+                  <Text style={styles.label}>EMAIL ADDRESS</Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="person-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
+                    <Mail size={18} color={T.textMuted} style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
-                      placeholder="Enter display name"
-                      value={nameInput}
-                      onChangeText={setNameInput}
-                      autoCapitalize="words"
-                      placeholderTextColor="#94A3B8"
+                      placeholder="traveler@example.com"
+                      value={emailInput}
+                      onChangeText={setEmailInput}
+                      autoCapitalize="none"
+                      keyboardType="email-address"
+                      placeholderTextColor={T.textMuted}
                     />
                   </View>
                 </View>
-
+              ) : (
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Username</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="at-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Choose username handle"
-                      value={usernameInput}
-                      onChangeText={setUsernameInput}
-                      autoCapitalize="none"
-                      placeholderTextColor="#94A3B8"
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Password</Text>
-                  <View style={styles.inputWrapper}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#94A3B8" style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { flex: 1 }]}
-                      placeholder="Create secure password"
-                      value={passwordInput}
-                      onChangeText={setPasswordInput}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      placeholderTextColor="#94A3B8"
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
-                      <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#94A3B8" />
+                  <Text style={styles.label}>MOBILE NUMBER</Text>
+                  <View style={styles.phoneRow}>
+                    <TouchableOpacity
+                      style={styles.codePickerBtn}
+                      onPress={() => setShowCountryPicker(true)}
+                    >
+                      <Text style={styles.codeFlag}>{selectedCountry.flag}</Text>
+                      <Text style={styles.codeText}>{selectedCountry.code}</Text>
                     </TouchableOpacity>
-                  </View>
-                </View>
-
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleStep2Next} activeOpacity={0.85}>
-                  <Text style={styles.primaryBtnText}>Continue</Text>
-                  <Ionicons name="arrow-forward" size={16} color="#FFF" style={{ marginLeft: 6 }} />
-                </TouchableOpacity>
-
-                <TouchableOpacity style={styles.backStepBtn} onPress={() => setStep(1)} activeOpacity={0.8}>
-                  <Text style={styles.backStepText}>Back to Step 1</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* ─── STEP 3: Customise ─── */}
-            {step === 3 && (
-              <View>
-                <Text style={styles.cardTitle}>Customise Experience</Text>
-                <Text style={styles.cardSubtitle}>Configure your target language and travel details</Text>
-
-                <Text style={[styles.label, { marginBottom: 12 }]}>Choose Target Language</Text>
-                <View style={styles.languageContainer}>
-                  {languages.map((lang) => {
-                    const isSelected = selectedLang === lang.name;
-                    return (
-                      <TouchableOpacity
-                        key={lang.name}
-                        style={[styles.languageCard, isSelected && styles.languageCardActive]}
-                        onPress={() => setSelectedLang(lang.name)}
-                        activeOpacity={0.8}
-                      >
-                        <Text style={styles.languageFlag}>{lang.flag}</Text>
-                        <Text style={[styles.languageLabel, isSelected && styles.languageLabelActive]}>{lang.name}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {[
-                  { label: 'Where is your trip?', icon: 'location-outline', value: destination, setter: setDestination, placeholder: 'e.g. Tokyo, Japan' },
-                  { label: 'When is your trip?', icon: 'calendar-outline', value: departureDate, setter: setDepartureDate, placeholder: 'YYYY-MM-DD' },
-                  { label: 'How long is your trip?', icon: 'time-outline', value: duration, setter: setDuration, placeholder: 'e.g. 14 days' },
-                  { label: 'Purpose of the trip', icon: 'briefcase-outline', value: purpose, setter: setPurpose, placeholder: 'e.g. Tourism, Business' },
-                ].map(({ label, icon, value, setter, placeholder }) => (
-                  <View style={styles.inputGroup} key={label}>
-                    <Text style={styles.label}>{label}</Text>
-                    <View style={styles.inputWrapper}>
-                      <Ionicons name={icon as any} size={20} color="#94A3B8" style={styles.inputIcon} />
+                    <View style={styles.phoneInputWrapper}>
                       <TextInput
                         style={styles.input}
-                        placeholder={placeholder}
-                        value={value}
-                        onChangeText={setter}
-                        placeholderTextColor="#94A3B8"
+                        placeholder="Phone number"
+                        value={phoneInput}
+                        onChangeText={setPhoneInput}
+                        keyboardType="phone-pad"
+                        placeholderTextColor={T.textMuted}
                       />
                     </View>
                   </View>
-                ))}
+                </View>
+              )}
 
-                <TouchableOpacity style={styles.primaryBtn} onPress={handleSignup} activeOpacity={0.85}>
-                  <Text style={styles.primaryBtnText}>Complete Signup</Text>
-                </TouchableOpacity>
+              <AnimatedPressable style={styles.primaryBtn} onPress={handleSendOtp}>
+                <Text style={styles.primaryBtnText}>Send Verification Code</Text>
+                <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </AnimatedPressable>
 
-                <TouchableOpacity style={styles.backStepBtn} onPress={() => setStep(2)} activeOpacity={0.8}>
-                  <Text style={styles.backStepText}>Back to Step 2</Text>
+              <View style={styles.linkContainer}>
+                <Text style={styles.linkText}>Already registered? </Text>
+                <TouchableOpacity onPress={() => router.push('/login')}>
+                  <Text style={styles.linkAction}>Sign In</Text>
                 </TouchableOpacity>
               </View>
-            )}
+            </View>
+          )}
 
-            {/* Redirect */}
-            <View style={styles.linkContainer}>
-              <Text style={styles.linkText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.push('/login')}>
-                <Text style={styles.linkAction}>Log In</Text>
+          {/* ── STEP 1.5: OTP Verify ──────────────────────── */}
+          {step === 1.5 && (
+            <View style={styles.card}>
+              <View style={styles.notchLeft} />
+              <View style={styles.notchRight} />
+
+              <Text style={styles.boardingTag}>SECURITY CHECK</Text>
+              <Text style={styles.cardTitle}>Enter 6-Digit Code</Text>
+              <Text style={styles.cardSubtitle}>
+                Sent to {contactType === 'email' ? emailInput : `${selectedCountry.code} ${phoneInput}`}
+              </Text>
+
+              <View style={styles.otpContainer}>
+                {otpInput.map((digit, idx) => (
+                  <TextInput
+                    key={idx}
+                    ref={otpRefs[idx]}
+                    style={[styles.otpBox, !!digit && styles.otpBoxFilled]}
+                    value={digit}
+                    onChangeText={(val) => handleOtpChange(val, idx)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    selectTextOnFocus
+                  />
+                ))}
+              </View>
+
+              <AnimatedPressable style={styles.primaryBtn} onPress={handleVerifyOtp}>
+                <Text style={styles.primaryBtnText}>Verify & Continue</Text>
+                <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </AnimatedPressable>
+
+              <TouchableOpacity style={styles.backStepBtn} onPress={() => setStep(1)}>
+                <Text style={styles.backStepText}>Change Contact Info</Text>
               </TouchableOpacity>
             </View>
-          </View>
+          )}
+
+          {/* ── STEP 2: Credentials ───────────────────────── */}
+          {step === 2 && (
+            <View style={styles.card}>
+              <View style={styles.notchLeft} />
+              <View style={styles.notchRight} />
+
+              <Text style={styles.boardingTag}>STEP 2 OF 3 • PASSENGER INFO</Text>
+              <Text style={styles.cardTitle}>Create Profile</Text>
+              <Text style={styles.cardSubtitle}>Set your traveler credentials</Text>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>FULL NAME</Text>
+                <View style={styles.inputWrapper}>
+                  <User size={18} color={T.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Sarah Jenkins"
+                    value={nameInput}
+                    onChangeText={setNameInput}
+                    placeholderTextColor={T.textMuted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>USERNAME</Text>
+                <View style={styles.inputWrapper}>
+                  <User size={18} color={T.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="sarahj"
+                    value={usernameInput}
+                    onChangeText={setUsernameInput}
+                    autoCapitalize="none"
+                    placeholderTextColor={T.textMuted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>PASSWORD</Text>
+                <View style={styles.inputWrapper}>
+                  <Lock size={18} color={T.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { flex: 1 }]}
+                    placeholder="••••••••••••"
+                    value={passwordInput}
+                    onChangeText={setPasswordInput}
+                    secureTextEntry={!showPassword}
+                    placeholderTextColor={T.textMuted}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff size={18} color={T.textMuted} /> : <Eye size={18} color={T.textMuted} />}
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <AnimatedPressable style={styles.primaryBtn} onPress={handleStep2Next}>
+                <Text style={styles.primaryBtnText}>Continue to Trip Setup</Text>
+                <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </AnimatedPressable>
+            </View>
+          )}
+
+          {/* ── STEP 3: Destination & Trip Setup ──────────── */}
+          {step === 3 && (
+            <View style={styles.card}>
+              <View style={styles.notchLeft} />
+              <View style={styles.notchRight} />
+
+              <Text style={styles.boardingTag}>STEP 3 OF 3 • FLIGHT DETAILS</Text>
+              <Text style={styles.cardTitle}>Upcoming Trip</Text>
+              <Text style={styles.cardSubtitle}>Target language & travel style</Text>
+
+              <Text style={styles.label}>PRIMARY DESTINATION LANGUAGE</Text>
+              <View style={styles.languageContainer}>
+                {languages.map((lang) => (
+                  <TouchableOpacity
+                    key={lang.name}
+                    style={[styles.languageCard, selectedLang === lang.name && styles.languageCardActive]}
+                    onPress={() => { HapticsManager.light(); setSelectedLang(lang.name); }}
+                  >
+                    <Text style={styles.languageFlag}>{lang.flag}</Text>
+                    <Text style={[styles.languageLabel, selectedLang === lang.name && styles.languageLabelActive]}>
+                      {lang.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>DESTINATION CITY / COUNTRY</Text>
+                <View style={styles.inputWrapper}>
+                  <MapPin size={18} color={T.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Tokyo, Japan"
+                    value={destination}
+                    onChangeText={setDestination}
+                    placeholderTextColor={T.textMuted}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>DEPARTURE DATE (YYYY-MM-DD)</Text>
+                <View style={styles.inputWrapper}>
+                  <Calendar size={18} color={T.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="2026-08-25"
+                    value={departureDate}
+                    onChangeText={setDepartureDate}
+                    placeholderTextColor={T.textMuted}
+                  />
+                </View>
+              </View>
+
+              <AnimatedPressable style={styles.primaryBtn} onPress={handleSignup}>
+                <Text style={styles.primaryBtnText}>Issue Boarding Pass & Enter</Text>
+                <Plane size={16} color="#FFFFFF" strokeWidth={2.5} />
+              </AnimatedPressable>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
-      {/* Country Code Picker — Compact Bottom Sheet */}
+      {/* Country Code Picker Modal */}
       <Modal visible={showCountryPicker} animationType="slide" transparent statusBarTranslucent>
-        {/* Backdrop */}
         <TouchableOpacity
           style={styles.modalBackdrop}
           activeOpacity={1}
           onPress={() => setShowCountryPicker(false)}
         />
-
-        {/* Sheet */}
         <View style={styles.modalSheet}>
-          {/* Drag Handle */}
           <View style={styles.dragHandle} />
-
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Select Country Code</Text>
             <TouchableOpacity onPress={() => setShowCountryPicker(false)} style={styles.modalCloseBtn}>
-              <Ionicons name="close" size={20} color="#0F172A" />
+              <X size={18} color={T.ink} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.searchWrapper}>
-            <Ionicons name="search-outline" size={18} color="#94A3B8" style={{ marginRight: 8 }} />
+            <Search size={18} color={T.textMuted} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
-              placeholder="Search country or code..."
+              placeholder="Search country..."
               value={countrySearch}
               onChangeText={setCountrySearch}
-              placeholderTextColor="#94A3B8"
-              autoFocus
+              placeholderTextColor={T.textMuted}
             />
           </View>
 
@@ -550,9 +506,7 @@ export default function SignupScreen() {
                 <Text style={styles.countryFlag}>{item.flag}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.countryName}>{item.name}</Text>
-                  <Text style={styles.countryDigits}>
-                    {item.digits.join(' or ')} digits
-                  </Text>
+                  <Text style={styles.countryDigits}>{item.digits.join(' or ')} digits</Text>
                 </View>
                 <Text style={styles.countryCode}>{item.code}</Text>
               </TouchableOpacity>
@@ -566,158 +520,111 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  scrollContent: { padding: 24, paddingBottom: 40 },
-  brandContainer: { alignItems: 'center', marginBottom: 32, marginTop: 20 },
-  iconCircle: {
-    width: 64, height: 64, borderRadius: 32,
-    backgroundColor: 'rgba(37,99,235,0.08)', alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16, borderWidth: 1, borderColor: 'rgba(37,99,235,0.15)',
+  container: { flex: 1, backgroundColor: T.paper },
+  scrollContent: { padding: 20, paddingBottom: 40 },
+  brandContainer: { alignItems: 'center', marginBottom: 24, marginTop: 12 },
+  postmarkBadge: {
+    width: 56, height: 56, borderRadius: 28,
+    backgroundColor: T.primaryLight, borderWidth: 1.5, borderColor: T.postmark,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 12,
   },
-  brandTitle: { fontSize: 26, fontWeight: '800', color: '#0F172A', marginBottom: 4 },
-  brandSubtitle: { fontSize: 14, color: '#64748B', textAlign: 'center' },
+  brandTitle: { fontSize: 24, fontFamily: 'Spectral_700Bold', color: T.ink, letterSpacing: 2, marginBottom: 4 },
+  brandSubtitle: { fontSize: 10, fontFamily: 'Inter_700Bold', color: T.textMuted, letterSpacing: 1.2, textAlign: 'center' },
   card: {
-    backgroundColor: '#FFF', borderRadius: 20, padding: 24,
-    borderWidth: 1, borderColor: '#CBD5E1',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
+    backgroundColor: T.surface, borderRadius: 14, padding: 24,
+    borderWidth: 1, borderColor: T.sandLine, position: 'relative', overflow: 'hidden',
+    ...TravelTheme.shadows.resting,
   },
-  cardTitle: { fontSize: 20, fontWeight: '700', color: '#0F172A', marginBottom: 4 },
-  cardSubtitle: { fontSize: 13, color: '#64748B', marginBottom: 20 },
+  notchLeft: {
+    position: 'absolute', left: -10, top: 60, width: 20, height: 20,
+    borderRadius: 10, backgroundColor: T.paper, borderWidth: 1, borderColor: T.sandLine, zIndex: 10,
+  },
+  notchRight: {
+    position: 'absolute', right: -10, top: 60, width: 20, height: 20,
+    borderRadius: 10, backgroundColor: T.paper, borderWidth: 1, borderColor: T.sandLine, zIndex: 10,
+  },
+  boardingTag: { fontSize: 10, fontFamily: 'Inter_800ExtraBold', color: T.postmark, letterSpacing: 1.2, marginBottom: 6 },
+  cardTitle: { fontSize: 22, fontFamily: 'Spectral_700Bold', color: T.ink, marginBottom: 4 },
+  cardSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', color: T.textSecondary, marginBottom: 20 },
   toggleBar: {
-    flexDirection: 'row', backgroundColor: '#F1F5F9',
-    borderRadius: 14, padding: 4, marginBottom: 20,
-    borderWidth: 1, borderColor: '#CBD5E1',
+    flexDirection: 'row', backgroundColor: T.paper, borderRadius: 10,
+    padding: 3, marginBottom: 20, borderWidth: 1, borderColor: T.sandLine,
   },
-  toggleTab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10, flexDirection: 'row', justifyContent: 'center' },
-  toggleTabActive: {
-    backgroundColor: '#FFF',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1,
-  },
-  toggleText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
-  toggleTextActive: { color: '#0F172A', fontWeight: '700' },
-  inputGroup: { marginBottom: 18 },
-  label: { fontSize: 13, fontWeight: '700', color: '#0F172A', marginBottom: 8 },
+  toggleTab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8, flexDirection: 'row', justifyContent: 'center' },
+  toggleTabActive: { backgroundColor: T.surface, ...TravelTheme.shadows.resting },
+  toggleText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: T.textMuted },
+  toggleTextActive: { color: T.ink, fontFamily: 'Inter_700Bold' },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 11, fontFamily: 'Inter_700Bold', color: T.ink, letterSpacing: 0.8, marginBottom: 6 },
   inputWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFF', borderWidth: 1, borderColor: '#CBD5E1',
-    borderRadius: 14, paddingHorizontal: 12,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: T.paper,
+    borderWidth: 1, borderColor: T.sandLine, borderRadius: 10, paddingHorizontal: 12,
   },
   inputIcon: { marginRight: 10 },
-  input: { flex: 1, paddingVertical: 12, fontSize: 14, color: '#0F172A' },
-  eyeIcon: { padding: 4 },
+  input: { flex: 1, paddingVertical: 12, fontSize: 14, fontFamily: 'Inter_500Medium', color: T.ink },
   phoneRow: { flexDirection: 'row', gap: 10 },
   codePickerBtn: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 12,
-    backgroundColor: '#FFF', gap: 6,
+    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: T.sandLine,
+    borderRadius: 10, paddingHorizontal: 12, paddingVertical: 12, backgroundColor: T.paper, gap: 6,
   },
   codeFlag: { fontSize: 18 },
-  codeText: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  codeText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: T.ink },
   phoneInputWrapper: {
-    flex: 1, flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 14, paddingHorizontal: 12,
+    flex: 1, flexDirection: 'row', alignItems: 'center', borderWidth: 1,
+    borderColor: T.sandLine, borderRadius: 10, paddingHorizontal: 12, backgroundColor: T.paper,
   },
-  helperText: { fontSize: 12, color: '#64748B', marginTop: 6 },
-  // OTP
-  otpContainer: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 28, marginTop: 8 },
+  otpContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 24, marginTop: 8 },
   otpBox: {
-    width: 44, height: 52, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#CBD5E1',
-    textAlign: 'center', fontSize: 22, fontWeight: '700', color: '#0F172A',
-    backgroundColor: '#F8FAFC',
+    width: 44, height: 52, borderRadius: 10, borderWidth: 1.5, borderColor: T.sandLine,
+    textAlign: 'center', fontSize: 20, fontFamily: 'Spectral_700Bold', color: T.ink, backgroundColor: T.paper,
   },
-  otpBoxFilled: { borderColor: '#2563EB', backgroundColor: '#EFF6FF' },
-  resendText: { color: '#2563EB', fontSize: 13, fontWeight: '700' },
-  // Buttons
+  otpBoxFilled: { borderColor: T.postmark, backgroundColor: T.primaryLight },
   primaryBtn: {
-    flexDirection: 'row', backgroundColor: '#2563EB',
-    paddingVertical: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    marginTop: 8, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12, shadowRadius: 8,
+    flexDirection: 'row', backgroundColor: T.postmark, paddingVertical: 14,
+    borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginTop: 8, gap: 8,
+    ...TravelTheme.shadows.button,
   },
-  primaryBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  primaryBtnText: { color: '#FFFFFF', fontSize: 14, fontFamily: 'Inter_700Bold' },
   backStepBtn: {
-    borderColor: '#CBD5E1', borderWidth: 1, paddingVertical: 12,
-    borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 12,
+    borderColor: T.sandLine, borderWidth: 1, paddingVertical: 12,
+    borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginTop: 12,
   },
-  backStepText: { color: '#475569', fontSize: 14, fontWeight: '700' },
-  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 18, gap: 10 },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#CBD5E1' },
-  dividerText: { fontSize: 12, color: '#94A3B8', fontWeight: '600', textTransform: 'uppercase' },
-  googleBtn: {
-    flexDirection: 'row', backgroundColor: '#FFF', borderWidth: 1, borderColor: '#CBD5E1',
-    paddingVertical: 14, borderRadius: 14, alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8,
-  },
-  googleBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '700' },
+  backStepText: { color: T.textSecondary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   linkContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 18 },
-  linkText: { fontSize: 13, color: '#64748B' },
-  linkAction: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
-  // Language
-  languageContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 10, marginBottom: 24 },
+  linkText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: T.textSecondary },
+  linkAction: { fontSize: 13, fontFamily: 'Inter_700Bold', color: T.postmark },
+  languageContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 8, marginBottom: 16 },
   languageCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
-    borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 12, width: '48%',
-    paddingHorizontal: 12, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: T.paper,
+    borderWidth: 1, borderColor: T.sandLine, borderRadius: 10, width: '48%',
+    paddingHorizontal: 10, paddingVertical: 10,
   },
-  languageCardActive: { borderColor: '#2563EB', borderWidth: 1.5 },
-  languageFlag: { fontSize: 20, marginRight: 8 },
-  languageLabel: { fontSize: 13, fontWeight: '600', color: '#475569' },
-  languageLabelActive: { color: '#2563EB', fontWeight: '700' },
-  // Modal — compact bottom sheet
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
+  languageCardActive: { borderColor: T.postmark, borderWidth: 1.5, backgroundColor: T.primaryLight },
+  languageFlag: { fontSize: 18, marginRight: 6 },
+  languageLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: T.textSecondary },
+  languageLabelActive: { color: T.postmark, fontFamily: 'Inter_700Bold' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(27, 42, 47, 0.4)' },
   modalSheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '60%',
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 12,
+    position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%',
+    backgroundColor: T.surface, borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    overflow: 'hidden', ...TravelTheme.shadows.raised,
   },
-  dragHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#CBD5E1',
-    alignSelf: 'center',
-    marginTop: 12, marginBottom: 4,
-  },
-  modalCloseBtn: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: '#F1F5F9',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 20, borderBottomWidth: 1, borderBottomColor: '#E2E8F0',
-  },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0F172A' },
+  dragHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: T.sandLine, alignSelf: 'center', marginTop: 10 },
+  modalCloseBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: T.paper, alignItems: 'center', justifyContent: 'center' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: T.sandLine },
+  modalTitle: { fontSize: 16, fontFamily: 'Spectral_700Bold', color: T.ink },
   searchWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    margin: 16, borderWidth: 1, borderColor: '#CBD5E1',
-    borderRadius: 14, paddingHorizontal: 12,
-    backgroundColor: '#FFF',
+    flexDirection: 'row', alignItems: 'center', margin: 12, borderWidth: 1,
+    borderColor: T.sandLine, borderRadius: 10, paddingHorizontal: 12, backgroundColor: T.paper,
   },
-  searchInput: { flex: 1, paddingVertical: 12, fontSize: 14, color: '#0F172A' },
+  searchInput: { flex: 1, paddingVertical: 10, fontSize: 13, fontFamily: 'Inter_500Medium', color: T.ink },
   countryRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9', gap: 12,
+    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16,
+    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.paper, gap: 12,
   },
-  countryRowActive: { backgroundColor: '#EFF6FF' },
-  countryFlag: { fontSize: 24 },
-  countryName: { fontSize: 14, fontWeight: '600', color: '#0F172A' },
-  countryDigits: { fontSize: 12, color: '#94A3B8', marginTop: 2 },
-  countryCode: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
+  countryRowActive: { backgroundColor: T.primaryLight },
+  countryFlag: { fontSize: 20 },
+  countryName: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: T.ink },
+  countryDigits: { fontSize: 11, fontFamily: 'Inter_400Regular', color: T.textMuted, marginTop: 1 },
+  countryCode: { fontSize: 13, fontFamily: 'Inter_700Bold', color: T.postmark },
 });

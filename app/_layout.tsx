@@ -11,6 +11,13 @@ import {
   Inter_700Bold,
   Inter_800ExtraBold,
 } from '@expo-google-fonts/inter';
+import {
+  Spectral_400Regular,
+  Spectral_600SemiBold,
+  Spectral_700Bold,
+  Spectral_800ExtraBold,
+} from '@expo-google-fonts/spectral';
+import { TravelTheme } from '../constants/TravelTheme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,6 +28,10 @@ export default function RootLayout() {
     Inter_600SemiBold,
     Inter_700Bold,
     Inter_800ExtraBold,
+    Spectral_400Regular,
+    Spectral_600SemiBold,
+    Spectral_700Bold,
+    Spectral_800ExtraBold,
   });
 
   useEffect(() => {
@@ -47,17 +58,17 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? '#F1F5F9' : '#F8FAFC',
+    backgroundColor: Platform.OS === 'web' ? '#EAE5D9' : TravelTheme.colors.paper,
   },
   mobileFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 480,
     alignSelf: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: TravelTheme.colors.paper,
     ...Platform.select({
       web: {
-        boxShadow: '0px 0px 20px rgba(0,0,0,0.05)' as any,
+        boxShadow: '0px 0px 24px rgba(27, 42, 47, 0.12)' as any,
         height: '100%' as any,
         overflow: 'hidden',
       }
