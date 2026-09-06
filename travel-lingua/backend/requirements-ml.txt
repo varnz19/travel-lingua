@@ -1,0 +1,12 @@
+# Machine Learning & AI Stack for Travel-Lingua (Person 3)
+torch>=2.2.0
+torchaudio>=2.2.0
+transformers>=4.38.0
+sentencepiece>=0.2.0
+sacremoses>=0.1.1
+faster-whisper>=1.0.0
+ctranslate2>=4.0.0
+soundfile>=0.12.1
+numpy>=1.24.0
+sentence-transformers>=2.5.0
+requests>=2.31.0

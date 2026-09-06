@@ -1,6 +1,7 @@
 import json
 import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from app.services.ml.asr.whisper_service import transcribe_audio_chunk
 
 logger = logging.getLogger("travel-lingua.websockets.voice")
 
@@ -59,12 +60,13 @@ async def voice_stream_websocket(websocket: WebSocket):
             elif "bytes" in message and message["bytes"]:
                 chunk_count += 1
                 audio_bytes = message["bytes"]
-                # Forward binary audio to Person 3 Faster-Whisper pipeline hook
+                # Person 3 Faster-Whisper pipeline integration
+                transcription = transcribe_audio_chunk(audio_bytes, language="ja")
                 await websocket.send_json({
                     "status": "interim",
                     "chunk_index": chunk_count,
                     "received_bytes": len(audio_bytes),
-                    "interim_text": "Listening..."
+                    "interim_text": transcription if transcription else "Listening..."
                 })
 
     except WebSocketDisconnect:
