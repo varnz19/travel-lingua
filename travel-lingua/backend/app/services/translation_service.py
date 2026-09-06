@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 import redis
 from app.core.config import settings
 from app.schemas.translation import TranslationResponse

@@ -22,6 +22,9 @@ async def voice_stream_websocket(websocket: WebSocket):
         while True:
             # Receive either text (JSON payload) or binary audio bytes
             message = await websocket.receive()
+            if message.get("type") == "websocket.disconnect":
+                logger.info("Client sent disconnect event")
+                break
 
             if "text" in message and message["text"]:
                 try:

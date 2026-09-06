@@ -1,0 +1,18 @@
+{
+  "include": [
+    "travel-lingua/backend"
+  ],
+  "extraPaths": [
+    "travel-lingua/backend",
+    "travel-lingua/backend/app"
+  ],
+  "executionEnvironments": [
+    {
+      "root": "travel-lingua/backend",
+      "extraPaths": [
+        "travel-lingua/backend",
+        "travel-lingua/backend/app"
+      ]
+    }
+  ]
+}

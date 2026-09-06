@@ -3,5 +3,12 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "python.defaultInterpreterPath": "${workspaceFolder}/travel-lingua/backend/venv/bin/python",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/travel-lingua/backend"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/travel-lingua/backend"
+  ]
 }

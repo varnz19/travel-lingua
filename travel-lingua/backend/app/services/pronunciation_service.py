@@ -16,7 +16,7 @@ class PronunciationService:
         total_score = 0.0
         mispronounced: List[str] = []
 
-        for idx, word in enumerate(words):
+        for word in words:
             # Generate realistic accuracy score (85-98%)
             score = round(random.uniform(86.0, 98.0), 1)
             word_scores.append(WordScore(word=word, score=score))

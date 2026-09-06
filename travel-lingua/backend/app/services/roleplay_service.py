@@ -1,5 +1,5 @@
-from typing import List, Dict, Any
-from app.schemas.roleplay import RoleplayRequest, RoleplayResponse, ChatMessage
+from typing import Dict, Any
+from app.schemas.roleplay import RoleplayRequest, RoleplayResponse
 
 
 SCENARIO_PROMPTS: Dict[str, Dict[str, Any]] = {
