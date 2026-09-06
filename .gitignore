@@ -46,3 +46,15 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Python virtual environment & cache
+venv/
+.venv/
+**/venv/
+**/.venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+**/.pytest_cache/
+
