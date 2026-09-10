@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Tuple
 
 logger = logging.getLogger("travel-lingua.ml.model_manager")
 
@@ -47,16 +47,71 @@ class ModelManager:
 
     @classmethod
     def get_translation_pipeline(cls, model_name: str):
-        """Lazy load MarianMT or NLLB pipeline singleton."""
+        """Lazy load MarianMT translation pipeline singleton."""
         cache_key = f"trans_{model_name}"
         if cache_key not in cls._instances:
-            logger.info(f"Loading Translation model: {model_name}...")
+            logger.info(f"Loading MarianMT translation model: {model_name}...")
             try:
                 from transformers import pipeline
                 device = 0 if cls.get_device() == "cuda" else -1
                 cls._instances[cache_key] = pipeline("translation", model=model_name, device=device)
             except Exception as e:
                 logger.warning(f"Could not load live translation model {model_name}: {e}")
+                cls._instances[cache_key] = None
+        return cls._instances[cache_key]
+
+    @classmethod
+    def get_nllb_pipeline(cls, model_name: str = "facebook/nllb-200-distilled-600M"):
+        """Lazy load Meta NLLB-200 translation pipeline singleton."""
+        cache_key = f"nllb_{model_name}"
+        if cache_key not in cls._instances:
+            logger.info(f"Loading NLLB-200 translation model: {model_name}...")
+            try:
+                from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+                device = "cuda" if cls.get_device() == "cuda" else "cpu"
+                tokenizer = AutoTokenizer.from_pretrained(model_name)
+                model = AutoModelForSeq2SeqLM.from_pretrained(model_name).to(device)
+                model.eval()
+                cls._instances[cache_key] = (tokenizer, model)
+            except Exception as e:
+                logger.warning(f"Could not load live NLLB-200 model {model_name}: {e}")
+                cls._instances[cache_key] = None
+        return cls._instances[cache_key]
+
+    @classmethod
+    def get_silero_vad(cls):
+        """Lazy load Silero-VAD model singleton for voice activity detection."""
+        cache_key = "silero_vad"
+        if cache_key not in cls._instances:
+            logger.info("Loading Silero-VAD model...")
+            try:
+                import torch
+                model, utils = torch.hub.load(
+                    repo_or_dir="snakers4/silero-vad",
+                    model="silero_vad",
+                    force_reload=False,
+                    onnx=False
+                )
+                cls._instances[cache_key] = (model, utils)
+            except Exception as e:
+                logger.warning(f"Could not load live Silero-VAD: {e}. Falling back to energy VAD.")
+                cls._instances[cache_key] = None
+        return cls._instances[cache_key]
+
+    @classmethod
+    def get_wav2vec(cls, model_id: str = "facebook/wav2vec2-xlsr-53-espeak-cv-ft"):
+        """Lazy load Wav2Vec 2.0 acoustic processor and CTC model singleton."""
+        cache_key = f"wav2vec_{model_id}"
+        if cache_key not in cls._instances:
+            logger.info(f"Loading Wav2Vec 2.0 acoustic model: {model_id}...")
+            try:
+                from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
+                processor = Wav2Vec2Processor.from_pretrained(model_id)
+                model = Wav2Vec2ForCTC.from_pretrained(model_id)
+                model.eval()
+                cls._instances[cache_key] = (processor, model)
+            except Exception as e:
+                logger.warning(f"Could not load live Wav2Vec model {model_id}: {e}")
                 cls._instances[cache_key] = None
         return cls._instances[cache_key]
 

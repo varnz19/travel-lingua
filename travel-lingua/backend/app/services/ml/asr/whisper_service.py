@@ -13,19 +13,20 @@ class WhisperASRService:
     def transcribe_audio(self, audio_bytes: bytes, language: str = "ja") -> str:
         """
         Transcribes incoming audio bytes using Faster-Whisper (CTranslate2 INT8).
-        Filters silence using VAD to reduce hallucinations and latency.
+        Uses Silero-VAD to filter non-speech and reduce Whisper hallucinations.
         """
         if not audio_bytes:
             return ""
 
-        # 1. Standardize to 16kHz mono float32
+        # 1. Standardize to 16kHz mono float32 linear PCM
         audio_array, _ = validate_and_standardize_audio(audio_bytes, target_sample_rate=16000)
 
-        # 2. Voice Activity Detection check
+        # 2. Silero Voice Activity Detection check
         if not is_speech_active(audio_array):
+            logger.debug("Silero-VAD: Non-speech or silence detected. Skipping transcription.")
             return ""
 
-        # 3. Faster-Whisper Inference
+        # 3. Faster-Whisper Inference via CTranslate2
         whisper_model = model_manager.get_whisper(model_size=self.model_size, compute_type="int8")
         if whisper_model:
             try:
@@ -50,4 +51,9 @@ whisper_service = WhisperASRService()
 
 def transcribe_audio_chunk(audio_bytes: bytes, language: str = "ja") -> str:
     """Person 1 Stable API interface for speech-to-text transcription."""
+    return whisper_service.transcribe_audio(audio_bytes, language=language)
+
+
+def transcribe_audio(audio_bytes: bytes, language: str = "ja") -> str:
+    """Person 1 alternative import alias for speech-to-text."""
     return whisper_service.transcribe_audio(audio_bytes, language=language)
