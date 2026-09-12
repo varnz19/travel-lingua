@@ -1,12 +1,12 @@
 import numpy as np
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 def align_phonemes_to_frames(
     phonemes: List[str],
     num_frames: int,
-    posteriors: np.ndarray = None,
-    phoneme_to_id: Dict[str, int] = None,
+    posteriors: Optional[np.ndarray] = None,
+    phoneme_to_id: Optional[Dict[str, int]] = None,
     frame_duration_ms: float = 20.0
 ) -> List[Dict[str, Any]]:
     """

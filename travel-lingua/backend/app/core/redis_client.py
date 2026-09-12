@@ -83,7 +83,9 @@ class RedisService:
         client = self.client
         if client:
             try:
-                return client.get(key)
+                res = client.get(key)
+                if res is not None:
+                    return res.decode("utf-8") if isinstance(res, bytes) else str(res)
             except Exception as e:
                 logger.debug(f"Redis get failed ({e}), checking in-memory fallback")
 
