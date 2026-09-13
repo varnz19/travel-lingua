@@ -1,0 +1,35 @@
+# ==============================================================================
+# Machine Learning & AI Stack for Travel-Lingua (Person 3)
+# ==============================================================================
+
+# Core Deep Learning & Audio Processing
+torch>=2.2.0
+torchaudio>=2.2.0
+soundfile>=0.12.1
+numpy>=1.24.0
+
+# NLP & Transformer Backends
+transformers>=4.38.0
+huggingface-hub>=0.20.0
+sentencepiece>=0.2.0
+sacremoses>=0.1.1
+
+# Speech-to-Text (ASR) & Voice Activity Detection
+faster-whisper>=1.0.0
+ctranslate2>=4.0.0
+onnxruntime>=1.16.0
+
+# Multilingual Vector Embeddings (Supabase pgvector)
+sentence-transformers>=2.5.0
+
+# Conversational Roleplay Agent
+google-generativeai>=0.5.0
+
+# Text-to-Speech (TTS)
+piper-tts>=1.2.0
+
+# Vision / Optical Character Recognition (OCR)
+paddleocr>=2.7.0
+paddlepaddle>=2.5.0
+opencv-python-headless>=4.8.0
+Pillow>=10.0.0

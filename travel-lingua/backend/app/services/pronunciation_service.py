@@ -1,38 +1,31 @@
-import random
+import base64
 from typing import List
 from app.schemas.practice import PronunciationResponse, WordScore
+from app.services.ml.pronunciation.gop_calculator import evaluate_pronunciation
 
 
 class PronunciationService:
     async def assess_pronunciation(self, target_text: str, language: str, audio_data: str) -> PronunciationResponse:
         """
         Pronunciation assessment pipeline integration layer.
-        Connects audio bytes to Person 3's ML acoustic model.
+        Connects audio bytes to Person 3's ML acoustic model (Wav2Vec + GOP).
         Returns detailed word-level accuracy scores and mispronounced phonemes.
         """
-        words = [w.strip("?,.!") for w in target_text.split() if w.strip()]
-        word_scores: List[WordScore] = []
-        
-        total_score = 0.0
-        mispronounced: List[str] = []
+        try:
+            audio_bytes = base64.b64decode(audio_data) if audio_data else b""
+        except Exception:
+            audio_bytes = audio_data.encode("utf-8") if audio_data else b""
 
-        for word in words:
-            # Generate realistic accuracy score (85-98%)
-            score = round(random.uniform(86.0, 98.0), 1)
-            word_scores.append(WordScore(word=word, score=score))
-            total_score += score
-
-        overall = round(total_score / max(len(words), 1), 1)
-
-        rating = "Excellent" if overall >= 90 else "Good" if overall >= 75 else "Practice Needed"
+        # Person 3 ML inference invocation
+        ml_result = evaluate_pronunciation(audio_bytes, target_text)
 
         return PronunciationResponse(
             target_text=target_text,
             language=language,
-            overall_score=overall,
-            accuracy_rating=rating,
-            words=word_scores,
-            mispronounced_phonemes=mispronounced
+            overall_score=ml_result["overall_score"],
+            accuracy_rating=ml_result["accuracy_rating"],
+            words=[WordScore(word=w["word"], score=w["score"]) for w in ml_result["words"]],
+            mispronounced_phonemes=ml_result["mispronounced_phonemes"]
         )
 
 
