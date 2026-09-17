@@ -25,7 +25,7 @@ FAST_TRAVEL_PHRASES = {
     ("menu please", "en", "ja"): ("メニューをお願いします", "Menyuu o onegaishimasu"),
     ("help me", "en", "ja"): ("助けてください", "Tasukete kudasai"),
     ("delicious", "en", "ja"): ("美味しいです", "Oishii desu"),
-    ("where is the train station?", "en", "ja"): ("駅はどこですか", "Eki wa doko desu ka"),
+    ("where is the train station", "en", "ja"): ("駅はどこですか", "Eki wa doko desu ka"),
     ("check please", "en", "ja"): ("お会計をお願いします", "Okaikei o onegaishimasu"),
     # Japanese -> English
     ("こんにちは", "ja", "en"): ("Hello / Good day", "Konnichiwa"),
@@ -97,7 +97,7 @@ class TranslationEngine:
         t_lang = (target_lang or "en").lower().strip()
 
         # Normalization for phrase lookup
-        lookup_key = (clean_text.lower().rstrip("?.!"), s_lang, t_lang)
+        lookup_key = (clean_text.lower().rstrip("?.!！？。、 \t"), s_lang, t_lang)
         if lookup_key in FAST_TRAVEL_PHRASES:
             translated, romanized = FAST_TRAVEL_PHRASES[lookup_key]
             return {
