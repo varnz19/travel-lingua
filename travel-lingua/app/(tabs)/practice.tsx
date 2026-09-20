@@ -17,6 +17,8 @@ import { ProfileContext } from '../../context/ProfileContext';
 import { TravelTheme } from '../../constants/TravelTheme';
 import { translatorService } from '../../services/translatorService';
 import { ocrService, OCRResult } from '../../services/ocrService';
+import { practiceService } from '../../services/practiceService';
+import { checkBackendHealth } from '../../services/apiConfig';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { HapticsManager } from '../../utils/HapticsManager';
 import {
@@ -83,6 +85,15 @@ export default function TranslateScreen() {
 
   // Live debounce timer
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Backend connection status
+  const [isBackendConnected, setIsBackendConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    checkBackendHealth().then(status => {
+      setIsBackendConnected(status.isConnected);
+    });
+  }, []);
 
   const swapLanguageDirection = () => {
     HapticsManager.medium();
@@ -227,20 +238,22 @@ export default function TranslateScreen() {
     setIsSaved(true);
   };
 
-  const startInlinePractice = () => {
+  const startInlinePractice = async () => {
     HapticsManager.medium();
     setIsPracticing(true);
     setIsRecording(true);
     setAccuracyScore(null);
 
-    setTimeout(() => {
-      setIsRecording(false);
-      const score = Math.floor(Math.random() * 16) + 85;
-      setAccuracyScore(score);
-      animateScoreReveal(score);
-      recordPracticeResult('sp_custom_' + Date.now(), score);
-      HapticsManager.success();
-    }, 2000);
+    // Provide realistic recording window
+    await new Promise(r => setTimeout(r, 1600));
+    setIsRecording(false);
+
+    const targetPhrase = translatedText || inputText || 'Konnichiwa';
+    const result = await practiceService.scorePronunciation(targetPhrase, targetLang);
+    setAccuracyScore(result.overallScore);
+    animateScoreReveal(result.overallScore);
+    recordPracticeResult('sp_custom_' + Date.now(), result.overallScore);
+    HapticsManager.success();
   };
 
   const handleTakePhoto = async () => {
@@ -314,7 +327,33 @@ export default function TranslateScreen() {
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         {/* ── Header ───────────────────────────────────── */}
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Live Translator & Scanner</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={styles.headerTitle}>Live Translator & Scanner</Text>
+            {isBackendConnected !== null && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: isBackendConnected ? 'rgba(52, 199, 89, 0.12)' : 'rgba(142, 142, 147, 0.12)',
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 12,
+                  gap: 4,
+                }}
+              >
+                {isBackendConnected ? <Wifi size={12} color="#34C759" /> : <WifiOff size={12} color="#8E8E93" />}
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '600',
+                    color: isBackendConnected ? '#34C759' : '#8E8E93',
+                  }}
+                >
+                  {isBackendConnected ? 'Live AI' : 'Offline'}
+                </Text>
+              </View>
+            )}
+          </View>
           <Text style={styles.headerSub}>Japanese to English voice, text & camera OCR translation</Text>
         </View>
 

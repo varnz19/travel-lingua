@@ -69,23 +69,42 @@ export default function SimulationChat() {
     }
   };
 
-  const handleSendCustom = () => {
+  const handleSendCustom = async () => {
     if (!input.trim()) return;
     const textVal = input.trim();
     setInput('');
 
-    const updatedChat = [
+    const newChat = [
       ...chat,
       { sender: 'user', text: textVal }
     ];
+    setChat(newChat);
+
+    const scenarioKey = typeof type === 'string' ? type : 'restaurant';
+    const history = chat.map(m => ({
+      role: m.sender === 'user' ? 'user' : 'assistant',
+      content: m.text,
+    }));
+
+    try {
+      const aiRes = await simulationService.sendRoleplayMessage(scenarioKey, textVal, history);
+      if (aiRes && aiRes.reply) {
+        const replyText = aiRes.feedbackGrammar
+          ? `${aiRes.reply}\n\n💡 Tip: ${aiRes.feedbackGrammar}`
+          : aiRes.reply;
+        setChat([...newChat, { sender: 'bot', text: replyText }]);
+        const cleanSpeak = aiRes.reply.split('(')[0].trim();
+        Speech.speak(cleanSpeak, { language: 'ja', rate: speechSpeed || 1.0 });
+        return;
+      }
+    } catch (_e) {
+      // Fallback
+    }
 
     setTimeout(() => {
-      updatedChat.push({ sender: 'bot', text: `Hai! I understand: "${textVal}". Arigatou gozaimasu!` });
-      setChat([...updatedChat]);
+      setChat(prev => [...prev, { sender: 'bot', text: `Hai! I understand: "${textVal}". Arigatou gozaimasu!` }]);
       Speech.speak("Hai! Arigatou gozaimasu", { language: 'ja', rate: speechSpeed || 1.0 });
     }, 600);
-
-    setChat(updatedChat);
   };
 
   const handleReplayTts = (text: string) => {

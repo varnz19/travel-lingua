@@ -368,11 +368,58 @@ export const SCENARIOS_DATA: Record<string, Scenario> = {
   }
 };
 
+import { getApiBaseUrl } from './apiConfig';
+
+export interface RoleplayAIResponse {
+  reply: string;
+  feedbackGrammar?: string;
+  suggestedNextPhrases: string[];
+  isLiveServer: boolean;
+}
+
 export const simulationService = {
   getScenarios: async (): Promise<Scenario[]> => {
     return Object.values(SCENARIOS_DATA);
   },
   getScenario: async (key: string): Promise<Scenario | null> => {
     return SCENARIOS_DATA[key] || null;
-  }
+  },
+  sendRoleplayMessage: async (
+    scenarioId: string,
+    message: string,
+    conversationHistory: Array<{ role: string; content: string }> = [],
+    difficulty: string = 'beginner'
+  ): Promise<RoleplayAIResponse | null> => {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/roleplay/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenario_id: scenarioId,
+          difficulty: difficulty,
+          message: message,
+          conversation_history: conversationHistory,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          reply: data.reply,
+          feedbackGrammar: data.feedback_grammar,
+          suggestedNextPhrases: data.suggested_next_phrases || [],
+          isLiveServer: true,
+        };
+      }
+    } catch (_err) {
+      // Backend unavailable; fall back to local dialogue nodes
+    }
+    return null;
+  },
 };

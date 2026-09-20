@@ -59,10 +59,56 @@ export interface OCRResult {
  * const text = result.text;
  * ```
  */
+import { Platform } from 'react-native';
+import { getApiBaseUrl } from './apiConfig';
+
 export const ocrService = {
   extractTextFromImage: async (imageUri: string): Promise<OCRResult> => {
-    // Simulate network latency for a realistic demo feel
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    // 1. Attempt live FastAPI backend OCR extraction
+    try {
+      const formData = new FormData();
+      if (Platform.OS === 'web') {
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        formData.append('file', blob, 'photo.jpg');
+      } else {
+        formData.append('file', {
+          uri: imageUri,
+          name: 'photo.jpg',
+          type: 'image/jpeg',
+        } as any);
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000);
+
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/ocr/extract`, {
+        method: 'POST',
+        body: formData,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.extracted_text) {
+          return {
+            extractedText: data.extracted_text,
+            confidence: Math.round(data.confidence || 95),
+            requiresNetwork: true,
+            method: 'Cloud Vision API',
+            detectedLanguage: 'ja',
+            regionDescription: `${data.orientation || 'horizontal'} text (${data.bounding_boxes?.length || 1} regions)`,
+          };
+        }
+      }
+    } catch (_err) {
+      // Backend unavailable; degrade to offline travel sample
+    }
+
+    // Simulate network latency for fallback feel
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     // Simulated OCR results based on realistic travel scenarios
     // In production, this would be replaced by actual OCR API calls

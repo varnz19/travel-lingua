@@ -105,10 +105,46 @@ const EN_TO_JA_DICTIONARY: Record<string, { trans: string; pron: string }> = {
   "goodbye": { trans: "さようなら (Sayounara)", pron: "sah-yoh-nah-rah" },
 };
 
+import { getApiBaseUrl } from './apiConfig';
+
 export const translatorService = {
   translate: async (text: string, source: string = 'ja', target: string = 'en'): Promise<TranslationResult> => {
-    // Simulate API network latency
-    await new Promise(resolve => setTimeout(resolve, 250));
+    if (!text || !text.trim()) {
+      return { translatedText: '', pronunciation: '', source, target };
+    }
+
+    // 1. Attempt live FastAPI backend translation
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.trim(),
+          source_lang: source,
+          target_lang: target,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.translated_text) {
+          return {
+            translatedText: data.translated_text,
+            pronunciation: data.romanized || undefined,
+            source: data.detected_lang || source,
+            target: target,
+          };
+        }
+      }
+    } catch (_e) {
+      // Backend unreachable or request timed out; seamlessly degrade to offline dictionary
+    }
 
     const clean = text.toLowerCase().trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
 
