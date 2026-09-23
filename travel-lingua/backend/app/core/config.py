@@ -6,10 +6,11 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Travel-Lingua Backend"
     API_V1_STR: str = "/api/v1"
 
-    # Supabase Configuration
-    SUPABASE_URL: str = "https://travel-lingua.supabase.co"
-    SUPABASE_KEY: str = "your-supabase-anon-or-service-key"
-    SUPABASE_JWT_SECRET: str = "super-secret-supabase-jwt-key-for-development"
+    # Supabase Configuration (Loaded from .env environment variables)
+    SUPABASE_URL: str = "https://oaajgvymysdrfvmtpczf.supabase.co"
+    SUPABASE_KEY: str = ""
+    SUPABASE_JWT_SECRET: str = ""
+    DATABASE_URL: str = ""
 
     # Redis Cache Configuration
     REDIS_URL: str = "redis://localhost:6379/0"

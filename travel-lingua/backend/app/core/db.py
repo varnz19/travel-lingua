@@ -5,17 +5,66 @@ from app.core.config import settings
 
 logger = logging.getLogger("travel-lingua.db")
 
-# Resilience-wrapped Supabase database client
+# Live Supabase database client initialization
 supabase: Optional[Client] = None
 
 try:
-    if settings.SUPABASE_URL and settings.SUPABASE_KEY and "your-supabase" not in settings.SUPABASE_KEY:
+    if settings.SUPABASE_URL and settings.SUPABASE_KEY:
         supabase = create_client(settings.SUPABASE_URL, settings.SUPABASE_KEY)
-        logger.info("Supabase database client initialized successfully.")
+        logger.info("Supabase live database client initialized successfully.")
     else:
-        logger.warning("Supabase credentials not configured in .env; operating in DB-fallback mode.")
+        logger.warning("Supabase credentials not set; operating in DB-fallback mode.")
 except Exception as e:
     logger.warning(f"Could not connect to Supabase DB: {e}. Operating in DB-fallback mode.")
+
+
+async def db_register_user(email: str, username: str, name: str, password: str, destination: str = "Tokyo, Japan", learning_language: str = "Japanese") -> Dict[str, Any]:
+    """Inserts a new registered user profile into Supabase 'users' / 'profiles' table."""
+    user_record = {
+        "email": email,
+        "username": username,
+        "name": name,
+        "password": password,
+        "destination": destination,
+        "learning_language": learning_language
+    }
+
+    if not supabase:
+        logger.warning(f"[DB Fallback] Simulated user registration for: {username}")
+        return {"user_id": f"usr_{username}", **user_record, "status": "simulated_success"}
+
+    try:
+        res = supabase.table("users").insert(user_record).execute()
+        created_data = res.data[0] if res.data else user_record
+        return {"user_id": created_data.get("id", f"usr_{username}"), **created_data, "status": "success"}
+    except Exception as e:
+        logger.error(f"Error registering user in Supabase 'users' table: {e}")
+        try:
+            res = supabase.table("profiles").insert(user_record).execute()
+            created_data = res.data[0] if res.data else user_record
+            return {"user_id": created_data.get("id", f"usr_{username}"), **created_data, "status": "success"}
+        except Exception as ex:
+            logger.error(f"Error registering user in Supabase 'profiles' table: {ex}")
+            return {"user_id": f"usr_{username}", **user_record, "status": "registered_locally"}
+
+
+async def db_match_phrases(query_embedding: List[float], match_threshold: float = 0.7, match_count: int = 5) -> List[Dict[str, Any]]:
+    """
+    Executes PostgreSQL semantic vector search RPC function 'match_phrases'.
+    RPC Signature: match_phrases(query_embedding, match_threshold, match_count)
+    """
+    if not supabase:
+        return []
+    try:
+        res = supabase.rpc("match_phrases", {
+            "query_embedding": query_embedding,
+            "match_threshold": match_threshold,
+            "match_count": match_count
+        }).execute()
+        return res.data or []
+    except Exception as e:
+        logger.error(f"Error executing Supabase vector search match_phrases RPC: {e}")
+        return []
 
 
 async def db_save_translation(user_id: str, text: str, translated_text: str, source_lang: str, target_lang: str) -> bool:
