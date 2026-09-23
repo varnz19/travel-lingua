@@ -8,6 +8,7 @@ class Settings(BaseSettings):
 
     # Supabase Configuration
     SUPABASE_URL: str = "https://travel-lingua.supabase.co"
+    SUPABASE_KEY: str = "your-supabase-anon-or-service-key"
     SUPABASE_JWT_SECRET: str = "super-secret-supabase-jwt-key-for-development"
 
     # Redis Cache Configuration
