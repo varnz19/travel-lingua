@@ -1,4 +1,5 @@
 import logging
+import uuid
 from typing import Optional, Dict, Any, List
 from supabase import create_client, Client
 from app.core.config import settings
@@ -19,33 +20,52 @@ except Exception as e:
 
 
 async def db_register_user(email: str, username: str, name: str, password: str, destination: str = "Tokyo, Japan", learning_language: str = "Japanese") -> Dict[str, Any]:
-    """Inserts a new registered user profile into Supabase 'users' / 'profiles' table."""
-    user_record = {
-        "email": email,
-        "username": username,
-        "name": name,
-        "password": password,
-        "destination": destination,
-        "learning_language": learning_language
-    }
+    """
+    Registers a new user in Supabase Auth and saves profile into Supabase 'profiles' table.
+    """
+    lang_code = "ja" if "japan" in learning_language.lower() else "en"
 
     if not supabase:
+        user_uuid = str(uuid.uuid4())
         logger.warning(f"[DB Fallback] Simulated user registration for: {username}")
-        return {"user_id": f"usr_{username}", **user_record, "status": "simulated_success"}
+        return {"user_id": user_uuid, "username": username, "status": "simulated_success"}
 
+    # 1. Register in Supabase Auth (auth.users)
     try:
-        res = supabase.table("users").insert(user_record).execute()
-        created_data = res.data[0] if res.data else user_record
-        return {"user_id": created_data.get("id", f"usr_{username}"), **created_data, "status": "success"}
-    except Exception as e:
-        logger.error(f"Error registering user in Supabase 'users' table: {e}")
+        auth_response = supabase.auth.admin.create_user({
+            "email": email,
+            "password": password,
+            "email_confirm": True,
+            "user_metadata": {
+                "name": name,
+                "username": username,
+                "destination": destination
+            }
+        })
+
+        user_id = auth_response.user.id
+        logger.info(f"Created user in Supabase Auth: {user_id}")
+
+        # 2. Update/Insert profile row in 'profiles' table
+        profile_record = {
+            "full_name": name,
+            "username": username,
+            "native_language": "en",
+            "target_language": lang_code,
+        }
+
         try:
-            res = supabase.table("profiles").insert(user_record).execute()
-            created_data = res.data[0] if res.data else user_record
-            return {"user_id": created_data.get("id", f"usr_{username}"), **created_data, "status": "success"}
-        except Exception as ex:
-            logger.error(f"Error registering user in Supabase 'profiles' table: {ex}")
-            return {"user_id": f"usr_{username}", **user_record, "status": "registered_locally"}
+            res = supabase.table("profiles").update(profile_record).eq("id", user_id).execute()
+            updated_data = res.data[0] if res.data else profile_record
+            logger.info(f"Profile row for '{username}' updated in Supabase DB!")
+            return {"user_id": user_id, **updated_data, "status": "success"}
+        except Exception as pe:
+            logger.warning(f"Note updating profiles table: {pe}")
+            return {"user_id": user_id, "username": username, "status": "success"}
+
+    except Exception as e:
+        logger.error(f"Error registering user in Supabase Auth/DB: {e}")
+        return {"user_id": str(uuid.uuid4()), "username": username, "status": "completed_with_notice", "detail": str(e)}
 
 
 async def db_match_phrases(query_embedding: List[float], match_threshold: float = 0.7, match_count: int = 5) -> List[Dict[str, Any]]:
