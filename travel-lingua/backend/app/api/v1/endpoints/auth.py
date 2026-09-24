@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -10,9 +11,9 @@ router = APIRouter()
 class SignupRequest(BaseModel):
     email: Optional[str] = Field(None, example="traveler@example.com")
     phone_number: Optional[str] = Field(None, example="+91 9876543210")
-    username: str = Field(..., example="sarahj")
-    name: str = Field(..., example="Sarah Jenkins")
-    password: str = Field(..., example="password123")
+    username: str = Field(..., example="demo_traveler")
+    name: str = Field(..., example="Demo Traveler")
+    password: str = Field(..., min_length=8, example="StrongPass123!")
     destination: Optional[str] = Field("Tokyo, Japan", example="Tokyo, Japan")
     learning_language: Optional[str] = Field("Japanese", example="Japanese")
 
@@ -30,11 +31,19 @@ class SignupResponse(BaseModel):
 async def register_user(request: SignupRequest):
     """
     Receives user signup credentials and syncs the profile record with Supabase DB.
+    Strictly validates that the password is at least 8 characters long.
     """
     if not request.username or not request.password:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username and password are required"
+            detail="Username and password are required."
+        )
+
+    clean_pwd = request.password.strip()
+    if len(clean_pwd) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 8 characters long."
         )
 
     user_email = request.email or f"{request.username}@travel-lingua.com"
@@ -42,7 +51,7 @@ async def register_user(request: SignupRequest):
         email=user_email,
         username=request.username,
         name=request.name,
-        password=request.password,
+        password=clean_pwd,
         destination=request.destination or "Tokyo, Japan",
         learning_language=request.learning_language or "Japanese"
     )

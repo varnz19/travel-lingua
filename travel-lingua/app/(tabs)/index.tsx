@@ -29,6 +29,7 @@ import {
   Shield,
 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
+import { getApiBaseUrl } from '../../services/apiConfig';
 
 const T = TravelTheme.colors;
 
@@ -52,11 +53,36 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isPlayingDailyAudio, setIsPlayingDailyAudio] = useState(false);
 
+  // Dynamic Phrase of the Day from Backend API
+  const [dailyPhrase, setDailyPhrase] = useState({
+    japanese: 'Arigatou gozaimasu (ありがとうございます)',
+    english: 'Thank you very much (Polite & universal)',
+    pronunciation: 'ah-ree-gah-toh goh-zah-ee-mahs',
+    audio_text: 'Arigatou gozaimasu'
+  });
+
+  const fetchDailyPhrase = useCallback(async () => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/phrases/daily`);
+      if (res.ok) {
+        const data = await res.json();
+        setDailyPhrase(data);
+      }
+    } catch (err) {
+      // Graceful fallback to default phrase
+    }
+  }, []);
+
+  React.useEffect(() => {
+    fetchDailyPhrase();
+  }, [fetchDailyPhrase]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     HapticsManager.light();
+    fetchDailyPhrase();
     setTimeout(() => setRefreshing(false), 800);
-  }, []);
+  }, [fetchDailyPhrase]);
 
   const daysRemaining = getDaysUntilDeparture();
 
@@ -79,7 +105,7 @@ export default function HomeScreen() {
     Speech.stop();
     setIsPlayingDailyAudio(true);
 
-    Speech.speak('Arigatou gozaimasu', {
+    Speech.speak(dailyPhrase.audio_text || 'Arigatou gozaimasu', {
       language: 'ja-JP',
       rate: 0.85,
       onDone: () => setIsPlayingDailyAudio(false),
@@ -177,14 +203,14 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.dailyJapaneseText}>Arigatou gozaimasu (ありがとうございます)</Text>
+          <Text style={styles.dailyJapaneseText}>{dailyPhrase.japanese}</Text>
 
           <View style={[styles.dailyEnglishBox, isPlayingDailyAudio && styles.dailyEnglishBoxActive]}>
             <Text style={styles.dailyEnglishLabel}>ENGLISH MEANING:</Text>
-            <Text style={styles.dailyEnglishText}>Thank you very much (Polite & universal)</Text>
+            <Text style={styles.dailyEnglishText}>{dailyPhrase.english}</Text>
           </View>
 
-          <Text style={styles.dailyPhonetic}>🗣️ ah-ree-gah-toh goh-zah-ee-mahs</Text>
+          <Text style={styles.dailyPhonetic}>🗣️ {dailyPhrase.pronunciation}</Text>
         </View>
 
         {/* ── Quick Travel Tools Shortcut Strip ───────────── */}

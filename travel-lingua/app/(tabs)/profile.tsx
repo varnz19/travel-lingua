@@ -69,8 +69,8 @@ export default function ProfileScreen() {
   const [badgesExpanded, setBadgesExpanded] = useState(false);
 
   // Edit Profile Form State
-  const [editName, setEditName] = useState(name || 'Sarah Jenkins');
-  const [editUsername, setEditUsername] = useState(username || 'sarahj');
+  const [editName, setEditName] = useState(name || 'Demo Traveler');
+  const [editUsername, setEditUsername] = useState(username || 'demotraveler');
   const [editDestination, setEditDestination] = useState(trip?.destination || 'Tokyo, Japan');
   const [editDepartureDate, setEditDepartureDate] = useState(trip?.departureDate || '2026-08-25');
   const [editTripType, setEditTripType] = useState(trip?.purpose || 'Tourism & Vacation');
@@ -136,11 +136,12 @@ export default function ProfileScreen() {
     router.replace('/login');
   };
 
+  // Real Milestone calculations derived from actual user activities
   const milestonesList = [
-    { id: 'b1', title: 'First Steps', desc: 'Saved 1st phrase', icon: '👣', unlocked: true },
-    { id: 'b2', title: 'Tokyo Ready', desc: 'Emergency pack cached', icon: '🇯🇵', unlocked: true },
-    { id: 'b3', title: 'Dining Master', desc: 'Practiced 5 food phrases', icon: '🍜', unlocked: true },
-    { id: 'b4', title: 'Polyglot Voyager', desc: 'Tested 2 languages', icon: '✈️', unlocked: false },
+    { id: 'b1', title: 'First Steps', desc: 'Saved 1st phrase', icon: '👣', unlocked: (ProfileContext && totalPracticedCount > 0) },
+    { id: 'b2', title: 'Destination Ready', desc: 'Trip details planned', icon: '🇯🇵', unlocked: !!trip?.destination },
+    { id: 'b3', title: 'Dining Master', desc: 'Practiced food phrases', icon: '🍜', unlocked: totalPracticedCount >= 3 },
+    { id: 'b4', title: 'Polyglot Voyager', desc: 'Active language learner', icon: '✈️', unlocked: totalPracticedCount >= 5 },
   ];
 
   return (
@@ -152,8 +153,8 @@ export default function ProfileScreen() {
             <User size={28} color={T.postmark} strokeWidth={2.2} />
           </View>
           <View style={{ flex: 1, paddingLeft: 12 }}>
-            <Text style={styles.profileName}>{name || username}</Text>
-            <Text style={styles.profileEmail}>{email || 'sarah.jenkins@example.com'}</Text>
+            <Text style={styles.profileName}>{name || username || 'Demo Traveler'}</Text>
+            <Text style={styles.profileEmail}>{email || 'demo@gmail.com'}</Text>
           </View>
           <TouchableOpacity style={styles.editIconBtn} onPress={handleOpenEdit}>
             <Edit3 size={16} color={T.postmark} />

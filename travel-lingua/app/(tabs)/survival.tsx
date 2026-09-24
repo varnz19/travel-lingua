@@ -51,9 +51,17 @@ export default function LearnScreen() {
   // Active Category State (null = Clean Category Directory, string = Category Detail View)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'categories' | 'packs'>('categories');
-  const [savedCompleted, setSavedCompleted] = useState<string[]>(['tp_intro_1', 'tp_food_1', 'tp_air_1']);
+  const [savedCompleted, setSavedCompleted] = useState<string[]>([]);
   const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [categoriesList, setCategoriesList] = useState(survivalService.getCategories());
+
+  // Fetch dynamic categories from backend
+  useEffect(() => {
+    survivalService.fetchCategoriesFromBackend().then(cats => {
+      if (cats && cats.length > 0) setCategoriesList(cats);
+    });
+  }, []);
 
   // Audio Playback Controls state
   const [playingPhraseId, setPlayingPhraseId] = useState<string | null>(null);
@@ -70,7 +78,7 @@ export default function LearnScreen() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
 
-  const categories = survivalService.getCategories();
+  const categories = categoriesList;
   const packs = survivalService.getPacks();
 
   const activeCategoryObj: TravelCategory | undefined = selectedCategory

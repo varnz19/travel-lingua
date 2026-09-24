@@ -556,6 +556,8 @@ export const PHRASE_PACKS: PhrasePack[] = [
   }
 ];
 
+import { getApiBaseUrl } from './apiConfig';
+
 export const survivalService = {
   getPhrasesByCategory: (categoryId: string): TravelPhrase[] => {
     if (!categoryId || categoryId === 'all') {
@@ -569,6 +571,21 @@ export const survivalService = {
   },
 
   getCategories: () => CATEGORIES,
+
+  fetchCategoriesFromBackend: async (): Promise<TravelCategory[]> => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/phrases/categories`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.categories && Array.isArray(data.categories)) {
+          return data.categories;
+        }
+      }
+    } catch (err) {
+      console.log('[SurvivalService] Backend unreachable, using offline packs');
+    }
+    return CATEGORIES;
+  },
 
   getPacks: (): PhrasePack[] => PHRASE_PACKS,
 };

@@ -169,13 +169,74 @@ export default function SignupScreen() {
     }
   };
 
+  // Password Strength Evaluation
+  const evaluatePassword = (pwd: string) => {
+    const p = pwd || '';
+    const hasMinLength = p.length >= 8;
+    const hasLower = /[a-z]/.test(p);
+    const hasUpper = /[A-Z]/.test(p);
+    const hasNumber = /[0-9]/.test(p);
+    const hasSpecial = /[^A-Za-z0-9]/.test(p);
+
+    let score = 0;
+    if (hasMinLength) score += 1;
+    if (hasLower && hasUpper) score += 1;
+    if (hasNumber) score += 1;
+    if (hasSpecial) score += 1;
+    if (p.length >= 12) score += 1;
+
+    let label = 'Too Short';
+    let color = '#DC2626';
+
+    if (!hasMinLength) {
+      label = `${p.length}/8 characters`;
+      color = '#DC2626';
+    } else if (score <= 2) {
+      label = 'Weak';
+      color = '#EA580C';
+    } else if (score === 3) {
+      label = 'Good';
+      color = '#CA8A04';
+    } else if (score === 4) {
+      label = 'Strong';
+      color = '#16A34A';
+    } else {
+      label = 'Very Strong';
+      color = '#059669';
+    }
+
+    return {
+      score,
+      label,
+      color,
+      hasMinLength,
+      hasLower,
+      hasUpper,
+      hasNumber,
+      hasSpecial
+    };
+  };
+
+  const passwordStrength = evaluatePassword(passwordInput);
+
   const handleStep2Next = () => {
     if (!nameInput.trim() || !usernameInput.trim() || !passwordInput.trim()) {
       Alert.alert('Required', 'Please fill in Name, Username, and Password to proceed.');
       return;
     }
-    if (passwordInput.trim().length < 6) {
-      Alert.alert('Password too short', 'Password must be at least 6 characters long.');
+    // STRICT PASSWORD RULE: Minimum 8 characters
+    if (passwordInput.trim().length < 8) {
+      Alert.alert(
+        'Password Too Short',
+        'Password must be at least 8 characters long.'
+      );
+      return;
+    }
+    if (passwordStrength.score < 2) {
+      Alert.alert(
+        'Weak Password',
+        'Please create a stronger password by including numbers or uppercase letters.'
+      );
       return;
     }
     HapticsManager.medium();
@@ -370,7 +431,7 @@ export default function SignupScreen() {
                   <User size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Sarah Jenkins"
+                    placeholder="Demo Traveler"
                     value={nameInput}
                     onChangeText={setNameInput}
                     placeholderTextColor={T.textMuted}
@@ -384,7 +445,7 @@ export default function SignupScreen() {
                   <User size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="sarahj"
+                    placeholder="demotraveler"
                     value={usernameInput}
                     onChangeText={setUsernameInput}
                     autoCapitalize="none"
@@ -394,12 +455,19 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>PASSWORD</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.label}>PASSWORD</Text>
+                  {passwordInput.length > 0 && (
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: passwordStrength.color }}>
+                      {passwordStrength.label}
+                    </Text>
+                  )}
+                </View>
                 <View style={styles.inputWrapper}>
                   <Lock size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder="••••••••••••"
+                    placeholder="Min 8 chars (e.g. Pass1234!)"
                     value={passwordInput}
                     onChangeText={setPasswordInput}
                     secureTextEntry={!showPassword}
@@ -409,6 +477,35 @@ export default function SignupScreen() {
                     {showPassword ? <EyeOff size={18} color={T.textMuted} /> : <Eye size={18} color={T.textMuted} />}
                   </TouchableOpacity>
                 </View>
+
+                {/* Password Strength Meter & Requirement Checklist */}
+                {passwordInput.length > 0 && (
+                  <View style={{ marginTop: 8 }}>
+                    <View style={{ height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, overflow: 'hidden', marginBottom: 8 }}>
+                      <View
+                        style={{
+                          height: '100%',
+                          width: `${Math.min(100, Math.max(15, passwordStrength.score * 20))}%`,
+                          backgroundColor: passwordStrength.color,
+                        }}
+                      />
+                    </View>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      <Text style={{ fontSize: 10, color: passwordStrength.hasMinLength ? '#16A34A' : '#DC2626', fontWeight: '600' }}>
+                        {passwordStrength.hasMinLength ? '✓ 8+ chars' : '✗ 8+ chars'}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: passwordStrength.hasUpper ? '#16A34A' : T.textMuted }}>
+                        {passwordStrength.hasUpper ? '✓ Uppercase' : '○ Uppercase'}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: passwordStrength.hasNumber ? '#16A34A' : T.textMuted }}>
+                        {passwordStrength.hasNumber ? '✓ Number' : '○ Number'}
+                      </Text>
+                      <Text style={{ fontSize: 10, color: passwordStrength.hasSpecial ? '#16A34A' : T.textMuted }}>
+                        {passwordStrength.hasSpecial ? '✓ Symbol' : '○ Symbol'}
+                      </Text>
+                    </View>
+                  </View>
+                )}
               </View>
 
               <AnimatedPressable style={styles.primaryBtn} onPress={handleStep2Next}>

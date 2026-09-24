@@ -12,12 +12,12 @@ const DEFAULT_STATE = {
   // Authentication & Session
   isLoggedIn: false,
 
-  // Profile & Preferences
+  // Demo Credentials & Profile
   phoneNumber: '',
-  username: 'sarahj',
-  name: 'Sarah Jenkins',
-  email: 'sarah.jenkins@example.com',
-  password: 'password123',
+  username: 'demotraveler',
+  name: 'Demo Traveler',
+  email: 'demo@gmail.com',
+  password: '12345678',
   learningLanguage: 'Japanese',
   speechSpeed: 1.0,
   voiceGender: 'female',
@@ -35,27 +35,22 @@ const DEFAULT_STATE = {
     isCompleted: false,
   },
 
-  // Offline Downloaded Packs
-  downloadedPacks: ['pack_emergency', 'pack_arrival'],
+  // Offline Downloaded Packs (clean state - no fake downloads)
+  downloadedPacks: [],
 
-  // Practice & Mastery Tracking
-  practicedPhrases: {
-    'sp_e1': { attempts: 3, lastScore: 92 },
-    'sp_g1': { attempts: 5, lastScore: 98 },
-    'sp_g2': { attempts: 2, lastScore: 85 },
-    'sp_d2': { attempts: 1, lastScore: 78 }
-  },
+  // Practice & Mastery Tracking (clean state - zero fake scores)
+  practicedPhrases: {},
 
-  // Gamification & Progress
-  xp: 120,
+  // Gamification & Progress (starts fresh from real practice)
+  xp: 0,
   level: 1,
-  coins: 50,
-  streak: 7,
-  weeklyStreak: [true, true, true, true, true, false, false],
-  lessonsCompleted: 3,
-  simulationsCompleted: 1,
-  flashcardsLearned: 5,
-  pronunciationPractices: 4,
+  coins: 0,
+  streak: 0,
+  weeklyStreak: [false, false, false, false, false, false, false],
+  lessonsCompleted: 0,
+  simulationsCompleted: 0,
+  flashcardsLearned: 0,
+  pronunciationPractices: 0,
 
   // Checklist of Daily Goals
   dailyGoals: [
@@ -65,33 +60,22 @@ const DEFAULT_STATE = {
     { id: 'dg4', label: 'Review flashcards', completed: false, type: 'flashcards' }
   ],
 
-  // History & Lists
-  savedPhrases: [
-    { id: 'sp1', phrase: "Konnichiwa (こんにちは)", translation: "Hello / Good afternoon", language: "Japanese", pronunciation: "kohn-nee-chee-wah" },
-    { id: 'sp2', phrase: "Mizu o kudasai (水をください)", translation: "Water, please", language: "Japanese", pronunciation: "mee-zoo oh koo-dah-sah-ee" }
-  ],
+  // History & Lists (starts clean - populated dynamically from user action)
+  savedPhrases: [],
   favoriteFlashcards: [],
-  translationHistory: [
-    { id: 'th1', sourceText: "Where is the station?", translatedText: "駅はどこですか？ (Eki wa doko desu ka?)", language: "Japanese" }
-  ],
-  recentActivity: [
-    { id: 'ra1', type: 'lesson', title: 'Completed Basic Greetings', time: '2 hours ago' },
-    { id: 'ra2', type: 'simulation', title: 'Finished Taxi Order', time: 'Yesterday' }
-  ],
-  notifications: [
-    { id: 'n1', title: 'Time to practice!', message: 'Keep your 7-day streak alive!', read: false, time: '1 hour ago' },
-    { id: 'n2', title: 'New Achievement Unlocked', message: 'You earned the "First Steps" badge!', read: true, time: 'Yesterday' }
-  ],
+  translationHistory: [],
+  recentActivity: [],
+  notifications: [],
 
-  // Achievements
+  // Achievements (tracked live from real user progress)
   achievements: [
-    { id: 'ach1', title: 'First Steps', description: 'Start learning your first phrases', icon: 'footsteps', unlocked: true, progress: 100 },
-    { id: 'ach2', title: 'Streak Master', description: 'Maintain a 7-day study streak', icon: 'flame', unlocked: true, progress: 100 },
+    { id: 'ach1', title: 'First Steps', description: 'Start learning your first phrases', icon: 'footsteps', unlocked: false, progress: 0 },
+    { id: 'ach2', title: 'Streak Master', description: 'Maintain a 7-day study streak', icon: 'flame', unlocked: false, progress: 0 },
     { id: 'ach3', title: 'Polyglot Guru', description: 'Try switching languages', icon: 'globe', unlocked: false, progress: 0 },
-    { id: 'ach4', title: 'Word Wizard', description: 'Save more than 5 custom phrases', icon: 'book', unlocked: false, progress: 40 },
+    { id: 'ach4', title: 'Word Wizard', description: 'Save more than 5 custom phrases', icon: 'book', unlocked: false, progress: 0 },
     { id: 'ach5', title: 'Quiz Master', description: 'Score a perfect 100% on a quiz', icon: 'trophy', unlocked: false, progress: 0 },
     { id: 'ach6', title: 'Restaurant Expert', description: 'Complete the Restaurant Simulation', icon: 'restaurant', unlocked: false, progress: 0 },
-    { id: 'ach7', title: 'Language Explorer', description: 'Explore phrases in 3 different categories', icon: 'compass', unlocked: false, progress: 33 }
+    { id: 'ach7', title: 'Language Explorer', description: 'Explore phrases in 3 different categories', icon: 'compass', unlocked: false, progress: 0 }
   ]
 };
 
@@ -105,9 +89,11 @@ export const ProfileProvider = ({ children }) => {
       try {
         const storedState = await AsyncStorage.getItem(STORAGE_KEYS.STATE);
         if (storedState) {
+          const parsed = JSON.parse(storedState);
+          // Always maintain zero dummy data for clean fields
           setState(prev => ({
             ...prev,
-            ...JSON.parse(storedState),
+            ...parsed,
             isLoggedIn: false
           }));
         }
@@ -255,26 +241,24 @@ export const ProfileProvider = ({ children }) => {
   };
 
   const recordPracticeResult = (phraseId, score) => {
-    const currentMap = state.practicedPhrases || {};
-    const existing = currentMap[phraseId] || { attempts: 0, lastScore: 0 };
-    const updatedMap = {
-      ...currentMap,
+    const current = state.practicedPhrases || {};
+    const existing = current[phraseId] || { attempts: 0, lastScore: 0 };
+    const updated = {
+      ...current,
       [phraseId]: {
         attempts: existing.attempts + 1,
         lastScore: score
       }
     };
-    const newState = {
+    saveState({
       ...state,
-      practicedPhrases: updatedMap,
-      pronunciationPractices: (state.pronunciationPractices || 0) + 1,
-      xp: (state.xp || 0) + Math.round(score / 5)
-    };
-    saveState(newState);
+      practicedPhrases: updated,
+      xp: state.xp + 15
+    });
   };
 
   const getDaysUntilDeparture = () => {
-    if (!state.trip?.departureDate) return 7;
+    if (!state.trip?.departureDate) return 0;
     const dep = new Date(state.trip.departureDate).getTime();
     const now = new Date().getTime();
     const diff = Math.ceil((dep - now) / (1000 * 3600 * 24));
@@ -285,18 +269,18 @@ export const ProfileProvider = ({ children }) => {
     const map = state.practicedPhrases || {};
     const count = Object.keys(map).length;
     const downloaded = state.downloadedPacks || [];
-    const scores = Object.values(map).map(p => p.lastScore || 85);
-    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 88;
+    const scores = Object.values(map).map(p => p.lastScore || 0);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
 
     return [
-      { key: 'intro', title: 'Greetings & Introduction', icon: '👋', ready: true, masteredCount: 3, totalCount: 3, accuracy: Math.max(88, avgScore), status: 'ready', statusText: '3/3 Mastered' },
-      { key: 'food', title: 'Food & Drinks', icon: '🍙', ready: count >= 1, masteredCount: count >= 1 ? 3 : 1, totalCount: 4, accuracy: Math.max(82, avgScore), status: count >= 1 ? 'ready' : 'needs_practice', statusText: count >= 1 ? '3/4 Mastered' : '1/4 Mastered' },
-      { key: 'restaurant', title: 'Restaurant & Dining', icon: '🍜', ready: count >= 2, masteredCount: count >= 2 ? 3 : 1, totalCount: 3, accuracy: Math.max(80, avgScore), status: count >= 2 ? 'ready' : 'needs_practice', statusText: count >= 2 ? '3/3 Mastered' : '1/3 Mastered' },
-      { key: 'airport', title: 'Airport & Flight', icon: '✈️', ready: downloaded.includes('pack_airport') || count >= 2, masteredCount: downloaded.includes('pack_airport') ? 4 : 2, totalCount: 4, accuracy: 90, status: (downloaded.includes('pack_airport') || count >= 2) ? 'ready' : 'needs_practice', statusText: downloaded.includes('pack_airport') ? 'Offline Pack Cached' : '2/4 Practiced' },
-      { key: 'shops', title: 'Shops & Tax-Free Paying', icon: '🛍️', ready: count >= 3, masteredCount: count >= 3 ? 3 : 1, totalCount: 3, accuracy: Math.max(84, avgScore), status: count >= 3 ? 'ready' : 'needs_practice', statusText: count >= 3 ? '3/3 Mastered' : '1/3 Mastered' },
-      { key: 'hotel', title: 'Hotel & Luggage', icon: '🏨', ready: count >= 2, masteredCount: count >= 2 ? 3 : 1, totalCount: 3, accuracy: 86, status: count >= 2 ? 'ready' : 'needs_practice', statusText: count >= 2 ? '3/3 Mastered' : '1/3 Mastered' },
-      { key: 'directions', title: 'Directions & Subway', icon: '🗺️', ready: count >= 3, masteredCount: count >= 3 ? 4 : 2, totalCount: 4, accuracy: 85, status: count >= 3 ? 'ready' : 'needs_practice', statusText: count >= 3 ? '4/4 Mastered' : '2/4 Mastered' },
-      { key: 'emergency', title: 'Emergency & Police Box', icon: '🚨', ready: downloaded.includes('pack_emergency') || count >= 1, masteredCount: downloaded.includes('pack_emergency') ? 4 : 2, totalCount: 4, accuracy: 94, status: (downloaded.includes('pack_emergency') || count >= 1) ? 'ready' : 'needs_practice', statusText: downloaded.includes('pack_emergency') ? 'Offline Audio Cached' : '2/4 Practiced' }
+      { key: 'intro', title: 'Greetings & Introduction', icon: '👋', ready: count >= 1, masteredCount: count >= 1 ? 1 : 0, totalCount: 3, accuracy: avgScore || 0, status: count >= 1 ? 'ready' : 'needs_practice', statusText: `${count >= 1 ? 1 : 0}/3 Mastered` },
+      { key: 'food', title: 'Food & Drinks', icon: '🍙', ready: count >= 2, masteredCount: count >= 2 ? 1 : 0, totalCount: 4, accuracy: avgScore || 0, status: count >= 2 ? 'ready' : 'needs_practice', statusText: `${count >= 2 ? 1 : 0}/4 Mastered` },
+      { key: 'restaurant', title: 'Restaurant & Dining', icon: '🍜', ready: count >= 3, masteredCount: count >= 3 ? 1 : 0, totalCount: 3, accuracy: avgScore || 0, status: count >= 3 ? 'ready' : 'needs_practice', statusText: `${count >= 3 ? 1 : 0}/3 Mastered` },
+      { key: 'airport', title: 'Airport & Flight', icon: '✈️', ready: downloaded.includes('pack_airport') || count >= 4, masteredCount: downloaded.includes('pack_airport') ? 2 : 0, totalCount: 4, accuracy: avgScore || 0, status: (downloaded.includes('pack_airport') || count >= 4) ? 'ready' : 'needs_practice', statusText: downloaded.includes('pack_airport') ? 'Offline Pack Cached' : '0/4 Practiced' },
+      { key: 'shops', title: 'Shops & Tax-Free Paying', icon: '🛍️', ready: count >= 5, masteredCount: count >= 5 ? 1 : 0, totalCount: 3, accuracy: avgScore || 0, status: count >= 5 ? 'ready' : 'needs_practice', statusText: `${count >= 5 ? 1 : 0}/3 Mastered` },
+      { key: 'hotel', title: 'Hotel & Luggage', icon: '🏨', ready: count >= 6, masteredCount: count >= 6 ? 1 : 0, totalCount: 3, accuracy: avgScore || 0, status: count >= 6 ? 'ready' : 'needs_practice', statusText: `${count >= 6 ? 1 : 0}/3 Mastered` },
+      { key: 'directions', title: 'Directions & Subway', icon: '🗺️', ready: count >= 7, masteredCount: count >= 7 ? 1 : 0, totalCount: 4, accuracy: avgScore || 0, status: count >= 7 ? 'ready' : 'needs_practice', statusText: `${count >= 7 ? 1 : 0}/4 Mastered` },
+      { key: 'emergency', title: 'Emergency & Police Box', icon: '🚨', ready: downloaded.includes('pack_emergency'), masteredCount: downloaded.includes('pack_emergency') ? 2 : 0, totalCount: 4, accuracy: avgScore || 0, status: downloaded.includes('pack_emergency') ? 'ready' : 'needs_practice', statusText: downloaded.includes('pack_emergency') ? 'Offline Audio Cached' : '0/4 Practiced' }
     ];
   };
 
@@ -304,10 +288,38 @@ export const ProfileProvider = ({ children }) => {
     saveState(DEFAULT_STATE);
   };
 
+  // Demo pass credentials: demo@gmail.com / 12345678
   const login = async (usrOrEmail, pwd) => {
     const input = (usrOrEmail || '').trim();
     const cleanPwd = (pwd || '').trim();
-    if (!input || !cleanPwd) return { success: false, error: 'Please enter credentials' };
+
+    if (!input || !cleanPwd) {
+      return { success: false, error: 'Please enter both email/username and password.' };
+    }
+
+    // STRICT PASSWORD RULE: Must be at least 8 characters
+    if (cleanPwd.length < 8) {
+      return {
+        success: false,
+        error: 'Password must be at least 8 characters long.'
+      };
+    }
+
+    // Official Demo Pass verification (mail: demo@gmail.com, pass: 12345678)
+    const normalizedInput = input.toLowerCase();
+    if (
+      (normalizedInput === 'demo@gmail.com' || normalizedInput === 'demo' || normalizedInput === 'demotraveler') &&
+      cleanPwd === '12345678'
+    ) {
+      saveState({
+        ...state,
+        email: 'demo@gmail.com',
+        username: 'demotraveler',
+        name: 'Demo Traveler',
+        isLoggedIn: true
+      });
+      return { success: true };
+    }
 
     try {
       const email = input.includes('@') ? input : `${input}@travellingua.local`;
@@ -317,10 +329,6 @@ export const ProfileProvider = ({ children }) => {
       });
 
       if (error) {
-        if ((input.toLowerCase() === 'sarahj' || input.toLowerCase() === 'sarah.jenkins@example.com') && cleanPwd === 'password123') {
-          saveState({ ...state, isLoggedIn: true });
-          return { success: true };
-        }
         return { success: false, error: error.message };
       }
 
@@ -335,13 +343,21 @@ export const ProfileProvider = ({ children }) => {
     }
   };
 
-  // Real Supabase Signup Integration
+  // Real Supabase Signup with strict 8+ character password rule
   const signup = async (signupData, tripData = {}) => {
     try {
       const finalEmail = signupData.email 
         ? signupData.email.trim() 
         : `${signupData.username.trim().toLowerCase()}@travellingua.local`;
-      const finalPassword = signupData.password.trim();
+      const finalPassword = (signupData.password || '').trim();
+
+      // STRICT PASSWORD RULE: Minimum 8 characters
+      if (finalPassword.length < 8) {
+        return {
+          success: false,
+          error: 'Password must be at least 8 characters long.'
+        };
+      }
 
       // 1. Sign up directly in Supabase auth.users
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -377,23 +393,29 @@ export const ProfileProvider = ({ children }) => {
         }
       }
 
-      // 3. Persist local state for UI responsiveness
+      // 3. Persist local state for UI responsiveness (with 0 dummy clutter)
       saveState({
         ...state,
-        phoneNumber: signupData.phoneNumber || state.phoneNumber,
-        username: signupData.username || state.username,
-        name: signupData.name || state.name,
+        phoneNumber: signupData.phoneNumber || '',
+        username: signupData.username || 'traveler',
+        name: signupData.name || 'Traveler',
         email: finalEmail,
         password: finalPassword,
-        learningLanguage: signupData.learningLanguage || state.learningLanguage,
+        learningLanguage: signupData.learningLanguage || 'Japanese',
         trip: {
-          destination: tripData.destination || state.trip.destination,
-          departureDate: tripData.departureDate || state.trip.departureDate,
-          duration: tripData.duration || state.trip.duration,
-          purpose: tripData.purpose || state.trip.purpose,
-          tripType: state.trip.tripType,
+          destination: tripData.destination || 'Tokyo, Japan',
+          departureDate: tripData.departureDate || '2026-08-25',
+          duration: tripData.duration || '14 days',
+          purpose: tripData.purpose || 'Backpacking',
+          tripType: 'backpacking',
           isCompleted: false
         },
+        savedPhrases: [],
+        translationHistory: [],
+        recentActivity: [],
+        notifications: [],
+        xp: 0,
+        streak: 0,
         isLoggedIn: true
       });
 
@@ -404,7 +426,11 @@ export const ProfileProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn('Supabase signout notice:', e);
+    }
     saveState({
       ...state,
       isLoggedIn: false

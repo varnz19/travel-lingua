@@ -22,10 +22,11 @@ import {
   User,
   Eye,
   EyeOff,
-  Sparkles,
+  Ticket,
   AlertCircle,
   ArrowRight,
-  Globe
+  Globe,
+  ShieldCheck,
 } from 'lucide-react-native';
 
 const T = TravelTheme.colors;
@@ -46,7 +47,7 @@ export default function LoginScreen() {
     }
   }, [isLoggedIn]);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setErrorMessage('');
     const usr = usernameInput.trim();
     const pwd = passwordInput.trim();
@@ -59,43 +60,50 @@ export default function LoginScreen() {
       return;
     }
 
-    const success = login(usr, pwd);
+    // STRICT RULE: Reject any password below 8 characters
+    if (pwd.length < 8) {
+      const msg = 'Password must be at least 8 characters long.';
+      setErrorMessage(msg);
+      HapticsManager.light();
+      if (Platform.OS !== 'web') Alert.alert('Invalid Password', msg);
+      return;
+    }
 
-    if (success) {
+    const result = await login(usr, pwd);
+
+    if (result && result.success) {
       HapticsManager.success();
       setTimeout(() => router.replace('/(tabs)'), 50);
     } else {
       HapticsManager.light();
-      const msg = 'Credentials not recognised. Try "sarahj" / "password123" or click Quick Fill Demo below.';
+      const msg = result?.error || 'Invalid credentials. You can use the Demo Pass below.';
       setErrorMessage(msg);
       if (Platform.OS !== 'web') {
-        Alert.alert(
-          'Login Failed',
-          `Credentials not recognised.\n\nDefault demo account: "sarahj" / "password123"`
-        );
+        Alert.alert('Login Failed', msg);
       }
     }
   };
 
-  const handleQuickDemo = () => {
-    setUsernameInput('sarahj');
-    setPasswordInput('password123');
+  // Official Demo Pass: mail: demo@gmail.com / pass: 12345678
+  const handleUseDemoPass = async () => {
+    setUsernameInput('demo@gmail.com');
+    setPasswordInput('12345678');
     setErrorMessage('');
     HapticsManager.success();
-    const success = login('sarahj', 'password123');
-    if (success) {
+    const result = await login('demo@gmail.com', '12345678');
+    if (result && result.success) {
       setTimeout(() => router.replace('/(tabs)'), 50);
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     HapticsManager.medium();
-    signup({
+    await signup({
       phoneNumber: '',
       email: 'traveler@google.com',
-      name: 'Sarah Jenkins',
-      username: 'sarahj',
-      password: 'password123',
+      name: 'Google Traveler',
+      username: 'googletraveler',
+      password: 'GooglePass2026!',
       learningLanguage: 'Japanese'
     }, {});
     setTimeout(() => router.replace('/(tabs)'), 50);
@@ -130,6 +138,22 @@ export default function LoginScreen() {
                 <Text style={styles.cardSubtitle}>Sign in to access your destination survival packs</Text>
               </View>
 
+              {/* Demo Pass Banner */}
+              <TouchableOpacity
+                style={styles.demoPassBanner}
+                onPress={handleUseDemoPass}
+                activeOpacity={0.85}
+              >
+                <View style={styles.demoPassHeader}>
+                  <Ticket size={16} color={T.postmark} style={{ marginRight: 6 }} />
+                  <Text style={styles.demoPassTag}>OFFICIAL DEMO PASS</Text>
+                </View>
+                <Text style={styles.demoPassDetails}>
+                  Email: <Text style={styles.demoPassBold}>demo@gmail.com</Text>  •  Pass: <Text style={styles.demoPassBold}>12345678</Text>
+                </Text>
+                <Text style={styles.demoPassAction}>Tap to auto-fill & login instantly →</Text>
+              </TouchableOpacity>
+
               {/* Error Banner */}
               {!!errorMessage && (
                 <View style={styles.errorBanner}>
@@ -140,12 +164,12 @@ export default function LoginScreen() {
 
               {/* Username Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>USERNAME, EMAIL OR PHONE</Text>
+                <Text style={styles.label}>EMAIL OR USERNAME</Text>
                 <View style={styles.inputWrapper}>
                   <User size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="sarahj or email"
+                    placeholder="demo@gmail.com or username"
                     value={usernameInput}
                     onChangeText={(text) => { setUsernameInput(text); setErrorMessage(''); }}
                     autoCapitalize="none"
@@ -156,12 +180,15 @@ export default function LoginScreen() {
 
               {/* Password Input */}
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>PASSWORD</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={styles.label}>PASSWORD</Text>
+                  <Text style={styles.passwordHint}>Min 8 characters</Text>
+                </View>
                 <View style={styles.inputWrapper}>
                   <Lock size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={[styles.input, { flex: 1 }]}
-                    placeholder="••••••••••••"
+                    placeholder="•••••••• (min 8 chars)"
                     value={passwordInput}
                     onChangeText={(text) => { setPasswordInput(text); setErrorMessage(''); }}
                     secureTextEntry={!showPassword}
@@ -185,12 +212,6 @@ export default function LoginScreen() {
               <AnimatedPressable style={styles.loginBtn} onPress={handleLogin}>
                 <Text style={styles.loginBtnText}>Log In to Flight Prep</Text>
                 <ArrowRight size={16} color="#FFFFFF" strokeWidth={2.5} />
-              </AnimatedPressable>
-
-              {/* Quick Demo Button */}
-              <AnimatedPressable style={styles.demoBtn} onPress={handleQuickDemo}>
-                <Sparkles size={16} color={T.postmark} style={{ marginRight: 6 }} />
-                <Text style={styles.demoBtnText}>Quick Fill Demo Account (sarahj)</Text>
               </AnimatedPressable>
 
               {/* Divider */}
@@ -229,128 +250,185 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    paddingVertical: 24,
   },
   innerContainer: {
     width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+    paddingHorizontal: 20,
   },
   brandContainer: {
     alignItems: 'center',
     marginBottom: 24,
   },
   postmarkBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: T.primaryLight,
-    borderWidth: 1.5,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    borderWidth: 2,
     borderColor: T.postmark,
+    borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: T.primaryLight,
     marginBottom: 12,
   },
   brandTitle: {
-    fontSize: 24,
-    fontFamily: 'Spectral_700Bold',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 22,
+    fontWeight: '800',
     color: T.ink,
     letterSpacing: 2,
-    marginBottom: 4,
   },
   brandSubtitle: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 10,
-    fontFamily: 'Inter_700Bold',
     color: T.textMuted,
-    letterSpacing: 1.2,
-    textAlign: 'center',
+    letterSpacing: 1.5,
+    marginTop: 4,
   },
   card: {
-    backgroundColor: T.surface,
-    borderRadius: 14,
-    padding: 24,
+    backgroundColor: T.cardBg,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: T.sandLine,
+    borderColor: T.cardBorder,
+    padding: 24,
     position: 'relative',
-    overflow: 'hidden',
-    ...TravelTheme.shadows.resting,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+      },
+    }),
   },
   notchLeft: {
     position: 'absolute',
     left: -10,
-    top: 60,
+    top: 70,
     width: 20,
     height: 20,
     borderRadius: 10,
     backgroundColor: T.paper,
-    borderWidth: 1,
-    borderColor: T.sandLine,
-    zIndex: 10,
+    borderRightWidth: 1,
+    borderColor: T.cardBorder,
   },
   notchRight: {
     position: 'absolute',
     right: -10,
-    top: 60,
+    top: 70,
     width: 20,
     height: 20,
     borderRadius: 10,
     backgroundColor: T.paper,
-    borderWidth: 1,
-    borderColor: T.sandLine,
-    zIndex: 10,
+    borderLeftWidth: 1,
+    borderColor: T.cardBorder,
   },
   cardHeader: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   boardingTag: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 10,
-    fontFamily: 'Inter_800ExtraBold',
+    fontWeight: '700',
     color: T.postmark,
-    letterSpacing: 1.2,
-    marginBottom: 6,
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   cardTitle: {
-    fontSize: 22,
-    fontFamily: 'Spectral_700Bold',
+    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 24,
+    fontWeight: '700',
     color: T.ink,
     marginBottom: 4,
   },
   cardSubtitle: {
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: T.textSecondary,
+    color: T.textMuted,
+    lineHeight: 18,
+  },
+  demoPassBanner: {
+    backgroundColor: T.primaryLight,
+    borderWidth: 1.5,
+    borderColor: T.postmark,
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  demoPassHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  demoPassTag: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 11,
+    fontWeight: '800',
+    color: T.postmark,
+    letterSpacing: 1,
+  },
+  demoPassDetails: {
+    fontSize: 12,
+    color: T.ink,
+    marginBottom: 4,
+  },
+  demoPassBold: {
+    fontWeight: '700',
+    color: T.postmark,
+  },
+  demoPassAction: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: T.postmark,
+    marginTop: 2,
   },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: T.primaryLight,
+    backgroundColor: '#FEE2E2',
     borderWidth: 1,
-    borderColor: T.postmark,
-    borderRadius: 10,
-    padding: 10,
+    borderColor: '#F87171',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 16,
   },
   errorBannerText: {
+    color: '#B91C1C',
+    fontSize: 13,
     flex: 1,
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    color: T.postmark,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     fontSize: 11,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: T.ink,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: 6,
+  },
+  passwordHint: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 10,
+    color: T.textMuted,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: T.paper,
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: T.sandLine,
-    borderRadius: 10,
+    borderColor: T.cardBorder,
+    borderRadius: 8,
     paddingHorizontal: 12,
   },
   inputIcon: {
@@ -358,91 +436,72 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    paddingVertical: 12,
+    height: 44,
     fontSize: 14,
-    fontFamily: 'Inter_500Medium',
     color: T.ink,
   },
   eyeIcon: {
-    padding: 4,
+    padding: 6,
   },
   loginBtn: {
-    flexDirection: 'row',
     backgroundColor: T.postmark,
-    paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 8,
+    height: 46,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
-    gap: 8,
-    ...TravelTheme.shadows.button,
+    marginBottom: 16,
   },
   loginBtnText: {
     color: '#FFFFFF',
     fontSize: 14,
-    fontFamily: 'Inter_700Bold',
-  },
-  demoBtn: {
-    flexDirection: 'row',
-    backgroundColor: T.primaryLight,
-    borderWidth: 1,
-    borderColor: T.sandLine,
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  demoBtnText: {
-    color: T.postmark,
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
+    marginRight: 8,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 16,
-    gap: 10,
+    marginBottom: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: T.sandLine,
+    backgroundColor: T.cardBorder,
   },
   dividerText: {
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
+    marginHorizontal: 12,
+    fontSize: 12,
     color: T.textMuted,
-    textTransform: 'uppercase',
   },
   googleBtn: {
-    flexDirection: 'row',
-    backgroundColor: T.surface,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: T.sandLine,
-    paddingVertical: 12,
-    borderRadius: 12,
+    borderColor: T.cardBorder,
+    borderRadius: 8,
+    height: 44,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 16,
   },
   googleBtnText: {
     color: T.ink,
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontSize: 14,
+    fontWeight: '600',
   },
   linkContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 18,
+    marginTop: 8,
   },
   linkText: {
     fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: T.textSecondary,
+    color: T.textMuted,
   },
   linkAction: {
     fontSize: 13,
-    fontFamily: 'Inter_700Bold',
+    fontWeight: '700',
     color: T.postmark,
   },
 });

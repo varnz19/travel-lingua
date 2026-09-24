@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.endpoints import auth, translate, practice, roleplay, ocr
+from app.api.v1.endpoints import auth, translate, practice, roleplay, ocr, phrases
 
 api_router = APIRouter()
 
@@ -8,3 +8,4 @@ api_router.include_router(translate.router, prefix="/translate", tags=["Translat
 api_router.include_router(practice.router, prefix="/practice", tags=["Pronunciation & Practice"])
 api_router.include_router(roleplay.router, prefix="/roleplay", tags=["Conversational Roleplay"])
 api_router.include_router(ocr.router, prefix="/ocr", tags=["Camera OCR"])
+api_router.include_router(phrases.router, prefix="/phrases", tags=["Survival Phrases & Daily Content"])
