@@ -69,8 +69,8 @@ export default function ProfileScreen() {
   const [badgesExpanded, setBadgesExpanded] = useState(false);
 
   // Edit Profile Form State
-  const [editName, setEditName] = useState(name || 'Demo Traveler');
-  const [editUsername, setEditUsername] = useState(username || 'demotraveler');
+  const [editName, setEditName] = useState(name || 'Traveler');
+  const [editUsername, setEditUsername] = useState(username || 'traveler');
   const [editDestination, setEditDestination] = useState(trip?.destination || 'Tokyo, Japan');
   const [editDepartureDate, setEditDepartureDate] = useState(trip?.departureDate || '2026-08-25');
   const [editTripType, setEditTripType] = useState(trip?.purpose || 'Tourism & Vacation');
@@ -153,8 +153,8 @@ export default function ProfileScreen() {
             <User size={28} color={T.postmark} strokeWidth={2.2} />
           </View>
           <View style={{ flex: 1, paddingLeft: 12 }}>
-            <Text style={styles.profileName}>{name || username || 'Demo Traveler'}</Text>
-            <Text style={styles.profileEmail}>{email || 'demo@gmail.com'}</Text>
+            <Text style={styles.profileName}>{name || username || 'Traveler'}</Text>
+            <Text style={styles.profileEmail}>{email || 'Signed in traveler'}</Text>
           </View>
           <TouchableOpacity style={styles.editIconBtn} onPress={handleOpenEdit}>
             <Edit3 size={16} color={T.postmark} />

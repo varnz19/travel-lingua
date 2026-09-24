@@ -12,12 +12,12 @@ const DEFAULT_STATE = {
   // Authentication & Session
   isLoggedIn: false,
 
-  // Demo Credentials & Profile
+  // Traveler Credentials & Profile
   phoneNumber: '',
-  username: 'demotraveler',
-  name: 'Demo Traveler',
-  email: 'demo@gmail.com',
-  password: '12345678',
+  username: '',
+  name: '',
+  email: '',
+  password: '',
   learningLanguage: 'Japanese',
   speechSpeed: 1.0,
   voiceGender: 'female',
@@ -303,22 +303,6 @@ export const ProfileProvider = ({ children }) => {
         success: false,
         error: 'Password must be at least 8 characters long.'
       };
-    }
-
-    // Official Demo Pass verification (mail: demo@gmail.com, pass: 12345678)
-    const normalizedInput = input.toLowerCase();
-    if (
-      (normalizedInput === 'demo@gmail.com' || normalizedInput === 'demo' || normalizedInput === 'demotraveler') &&
-      cleanPwd === '12345678'
-    ) {
-      saveState({
-        ...state,
-        email: 'demo@gmail.com',
-        username: 'demotraveler',
-        name: 'Demo Traveler',
-        isLoggedIn: true
-      });
-      return { success: true };
     }
 
     try {

@@ -22,11 +22,9 @@ import {
   User,
   Eye,
   EyeOff,
-  Ticket,
   AlertCircle,
   ArrowRight,
   Globe,
-  ShieldCheck,
 } from 'lucide-react-native';
 
 const T = TravelTheme.colors;
@@ -76,23 +74,11 @@ export default function LoginScreen() {
       setTimeout(() => router.replace('/(tabs)'), 50);
     } else {
       HapticsManager.light();
-      const msg = result?.error || 'Invalid credentials. You can use the Demo Pass below.';
+      const msg = result?.error || 'Invalid credentials. Please verify your email and password.';
       setErrorMessage(msg);
       if (Platform.OS !== 'web') {
         Alert.alert('Login Failed', msg);
       }
-    }
-  };
-
-  // Official Demo Pass: mail: demo@gmail.com / pass: 12345678
-  const handleUseDemoPass = async () => {
-    setUsernameInput('demo@gmail.com');
-    setPasswordInput('12345678');
-    setErrorMessage('');
-    HapticsManager.success();
-    const result = await login('demo@gmail.com', '12345678');
-    if (result && result.success) {
-      setTimeout(() => router.replace('/(tabs)'), 50);
     }
   };
 
@@ -138,22 +124,6 @@ export default function LoginScreen() {
                 <Text style={styles.cardSubtitle}>Sign in to access your destination survival packs</Text>
               </View>
 
-              {/* Demo Pass Banner */}
-              <TouchableOpacity
-                style={styles.demoPassBanner}
-                onPress={handleUseDemoPass}
-                activeOpacity={0.85}
-              >
-                <View style={styles.demoPassHeader}>
-                  <Ticket size={16} color={T.postmark} style={{ marginRight: 6 }} />
-                  <Text style={styles.demoPassTag}>OFFICIAL DEMO PASS</Text>
-                </View>
-                <Text style={styles.demoPassDetails}>
-                  Email: <Text style={styles.demoPassBold}>demo@gmail.com</Text>  •  Pass: <Text style={styles.demoPassBold}>12345678</Text>
-                </Text>
-                <Text style={styles.demoPassAction}>Tap to auto-fill & login instantly →</Text>
-              </TouchableOpacity>
-
               {/* Error Banner */}
               {!!errorMessage && (
                 <View style={styles.errorBanner}>
@@ -169,7 +139,7 @@ export default function LoginScreen() {
                   <User size={18} color={T.textMuted} style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="demo@gmail.com or username"
+                    placeholder="Enter your email or username"
                     value={usernameInput}
                     onChangeText={(text) => { setUsernameInput(text); setErrorMessage(''); }}
                     autoCapitalize="none"
@@ -354,42 +324,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: T.textMuted,
     lineHeight: 18,
-  },
-  demoPassBanner: {
-    backgroundColor: T.primaryLight,
-    borderWidth: 1.5,
-    borderColor: T.postmark,
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  demoPassHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  demoPassTag: {
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-    fontSize: 11,
-    fontWeight: '800',
-    color: T.postmark,
-    letterSpacing: 1,
-  },
-  demoPassDetails: {
-    fontSize: 12,
-    color: T.ink,
-    marginBottom: 4,
-  },
-  demoPassBold: {
-    fontWeight: '700',
-    color: T.postmark,
-  },
-  demoPassAction: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: T.postmark,
-    marginTop: 2,
   },
   errorBanner: {
     flexDirection: 'row',
