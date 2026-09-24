@@ -1,41 +1,38 @@
-import React, { useState, useContext } from 'react';
+import { useRouter } from 'expo-router';
 import {
-  View,
+  ArrowRight,
+  Calendar,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Plane,
+  Search,
+  User,
+  X
+} from 'lucide-react-native';
+import React, { useContext, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  ScrollView,
-  Modal,
-  FlatList
+  View
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { ProfileContext } from '../context/ProfileContext';
-import { TravelTheme } from '../constants/TravelTheme';
 import { AnimatedPressable } from '../components/AnimatedPressable';
+import { TravelTheme } from '../constants/TravelTheme';
+import { ProfileContext } from '../context/ProfileContext';
 import { HapticsManager } from '../utils/HapticsManager';
-import {
-  Plane,
-  Mail,
-  Phone,
-  Lock,
-  User,
-  Eye,
-  EyeOff,
-  Search,
-  X,
-  ArrowRight,
-  ArrowLeft,
-  Calendar,
-  Compass,
-  MapPin,
-  CheckCircle2,
-  Globe
-} from 'lucide-react-native';
 
 const T = TravelTheme.colors;
 
@@ -66,6 +63,7 @@ export default function SignupScreen() {
   const { signup } = useContext(ProfileContext);
 
   const [step, setStep] = useState<1 | 1.5 | 2 | 3>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Step 1 states
   const [contactType, setContactType] = useState<'email' | 'phone'>('email');
@@ -176,12 +174,19 @@ export default function SignupScreen() {
       Alert.alert('Required', 'Please fill in Name, Username, and Password to proceed.');
       return;
     }
+    if (passwordInput.trim().length < 6) {
+      Alert.alert('Password too short', 'Password must be at least 6 characters long.');
+      return;
+    }
     HapticsManager.medium();
     setStep(3);
   };
 
-  const handleSignup = () => {
-    HapticsManager.success();
+  const handleSignup = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    HapticsManager.medium();
+
     const signupData = {
       phoneNumber: contactType === 'phone' ? `${selectedCountry.code} ${phoneInput.trim()}` : '',
       email: contactType === 'email' ? emailInput.trim() : '',
@@ -198,8 +203,20 @@ export default function SignupScreen() {
       purpose: purpose || 'Backpacking'
     };
 
-    signup(signupData, tripData);
-    setTimeout(() => router.replace('/(tabs)'), 50);
+    const result = await signup(signupData, tripData);
+    setIsSubmitting(false);
+
+    if (result && result.success) {
+      HapticsManager.success();
+      router.replace('/(tabs)');
+    } else {
+      const errorMsg = result?.error || 'Registration failed. Please try again.';
+      if (Platform.OS === 'web') {
+        alert(`Error: ${errorMsg}`);
+      } else {
+        Alert.alert('Registration Error', errorMsg);
+      }
+    }
   };
 
   return (
@@ -217,7 +234,7 @@ export default function SignupScreen() {
             <Text style={styles.brandSubtitle}>NEW PASSENGER REGISTRATION</Text>
           </View>
 
-          {/* ── STEP 1: Contact Input ──────────────────────── */}
+          {/* ── STEP 1: Contact Input ── */}
           {step === 1 && (
             <View style={styles.card}>
               <View style={styles.notchLeft} />
@@ -299,7 +316,7 @@ export default function SignupScreen() {
             </View>
           )}
 
-          {/* ── STEP 1.5: OTP Verify ──────────────────────── */}
+          {/* ── STEP 1.5: OTP Verify ── */}
           {step === 1.5 && (
             <View style={styles.card}>
               <View style={styles.notchLeft} />
@@ -337,7 +354,7 @@ export default function SignupScreen() {
             </View>
           )}
 
-          {/* ── STEP 2: Credentials ───────────────────────── */}
+          {/* ── STEP 2: Credentials ── */}
           {step === 2 && (
             <View style={styles.card}>
               <View style={styles.notchLeft} />
@@ -401,7 +418,7 @@ export default function SignupScreen() {
             </View>
           )}
 
-          {/* ── STEP 3: Destination & Trip Setup ──────────── */}
+          {/* ── STEP 3: Destination & Trip Setup ── */}
           {step === 3 && (
             <View style={styles.card}>
               <View style={styles.notchLeft} />
@@ -455,9 +472,19 @@ export default function SignupScreen() {
                 </View>
               </View>
 
-              <AnimatedPressable style={styles.primaryBtn} onPress={handleSignup}>
-                <Text style={styles.primaryBtnText}>Issue Boarding Pass & Enter</Text>
-                <Plane size={16} color="#FFFFFF" strokeWidth={2.5} />
+              <AnimatedPressable 
+                style={[styles.primaryBtn, isSubmitting && { opacity: 0.7 }]} 
+                onPress={handleSignup}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Text style={styles.primaryBtnText}>Issue Boarding Pass & Enter</Text>
+                    <Plane size={16} color="#FFFFFF" strokeWidth={2.5} />
+                  </>
+                )}
               </AnimatedPressable>
             </View>
           )}
