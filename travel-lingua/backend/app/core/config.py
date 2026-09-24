@@ -7,7 +7,8 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # Supabase Configuration
-    SUPABASE_URL: str = "https://travel-lingua.supabase.co"
+    SUPABASE_URL: str = "https://oaajgvymysdrfvmtpczf.supabase.co"
+    SUPABASE_KEY: str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9hYWpndnlteXNkcmZ2bXRwY3pmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MTM4ODMsImV4cCI6MjEwMjk4OTg4M30.C4-XkLtrHemz4wmqSy0z5Owx1YIjtR1IKBCgfzi_eME"
     SUPABASE_JWT_SECRET: str = "super-secret-supabase-jwt-key-for-development"
 
     # Redis Cache Configuration
