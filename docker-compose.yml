@@ -1,0 +1,73 @@
+version: '3.8'
+
+services:
+  # ========================================================
+  # Frontend Web Service (Expo Web SPA served through Nginx)
+  # ========================================================
+  frontend:
+    build:
+      context: ./travel-lingua
+      dockerfile: Dockerfile
+    container_name: travel-lingua-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - travel-lingua-net
+
+  # ========================================================
+  # Backend API Gateway Service (FastAPI + Uvicorn)
+  # ========================================================
+  backend:
+    build:
+      context: ./travel-lingua/backend
+      dockerfile: Dockerfile
+    container_name: travel-lingua-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PROJECT_NAME=Travel-Lingua Backend
+      - API_V1_STR=/api/v1
+      - SUPABASE_URL=https://oaajgvymysdrfvmtpczf.supabase.co
+      - SUPABASE_JWT_SECRET=super-secret-supabase-jwt-key-for-development
+      - REDIS_URL=redis://redis:6379/0
+      - CORS_ORIGINS=["*"]
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - travel-lingua-net
+
+  # ========================================================
+  # Redis Cache Service (In-memory translation & rate cache)
+  # ========================================================
+  redis:
+    image: redis:7-alpine
+    container_name: travel-lingua-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - travel-lingua-net
+
+# ========================================================
+# Volumes & Networks
+# ========================================================
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  travel-lingua-net:
+    driver: bridge
