@@ -274,7 +274,10 @@ export default function HomeScreen() {
             style={styles.sceneCard}
             onPress={() => {
               HapticsManager.light();
-              router.push('/(tabs)/survival' as any);
+              router.push({
+                pathname: '/(tabs)/survival',
+                params: { category: 'restaurants' }
+              } as any);
             }}
           >
             <Image source={{ uri: DINING_CARD_IMG }} style={styles.sceneImage} />
@@ -290,7 +293,10 @@ export default function HomeScreen() {
             style={styles.sceneCard}
             onPress={() => {
               HapticsManager.light();
-              router.push('/(tabs)/survival' as any);
+              router.push({
+                pathname: '/(tabs)/survival',
+                params: { category: 'airport' }
+              } as any);
             }}
           >
             <Image source={{ uri: TRANSIT_CARD_IMG }} style={styles.sceneImage} />
@@ -306,7 +312,10 @@ export default function HomeScreen() {
             style={styles.sceneCard}
             onPress={() => {
               HapticsManager.light();
-              router.push('/(tabs)/survival' as any);
+              router.push({
+                pathname: '/(tabs)/survival',
+                params: { category: 'shops' }
+              } as any);
             }}
           >
             <Image source={{ uri: SHOPPING_CARD_IMG }} style={styles.sceneImage} />
@@ -322,7 +331,10 @@ export default function HomeScreen() {
             style={styles.sceneCard}
             onPress={() => {
               HapticsManager.light();
-              router.push('/(tabs)/survival' as any);
+              router.push({
+                pathname: '/(tabs)/survival',
+                params: { category: 'hotel' }
+              } as any);
             }}
           >
             <Image source={{ uri: HOTEL_CARD_IMG }} style={styles.sceneImage} />

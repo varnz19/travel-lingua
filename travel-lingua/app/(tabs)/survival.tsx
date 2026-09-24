@@ -12,7 +12,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ProfileContext } from '../../context/ProfileContext';
 import { TravelTheme } from '../../constants/TravelTheme';
 import { survivalService, TravelPhrase, TravelCategory } from '../../services/survivalService';
@@ -38,6 +38,7 @@ const T = TravelTheme.colors;
 
 export default function LearnScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ category?: string }>();
   const {
     trip,
     downloadedPacks = [],
@@ -49,12 +50,19 @@ export default function LearnScreen() {
   const daysRemaining = getDaysUntilDeparture();
 
   // Active Category State (null = Clean Category Directory, string = Category Detail View)
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(params.category || null);
   const [activeTab, setActiveTab] = useState<'categories' | 'packs'>('categories');
   const [savedCompleted, setSavedCompleted] = useState<string[]>([]);
   const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [categoriesList, setCategoriesList] = useState(survivalService.getCategories());
+
+  // Automatically open the targeted category if passed via navigation param
+  useEffect(() => {
+    if (params.category) {
+      setSelectedCategory(params.category);
+    }
+  }, [params.category]);
 
   // Fetch dynamic categories from backend
   useEffect(() => {
@@ -126,6 +134,11 @@ export default function LearnScreen() {
     Speech.stop();
     setPlayingPhraseId(null);
     setSelectedCategory(null);
+    try {
+      router.setParams({ category: '' });
+    } catch (e) {
+      // safe fallback
+    }
   };
 
   const handleToggleSound = async (phrase: TravelPhrase) => {
