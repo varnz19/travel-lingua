@@ -26,7 +26,6 @@ import {
   Camera,
   MessageSquare,
   Sparkles,
-  Shield,
 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { getApiBaseUrl } from '../../services/apiConfig';
@@ -46,7 +45,6 @@ export default function HomeScreen() {
     name,
     username,
     trip,
-    learningLanguage,
     getDaysUntilDeparture,
   } = useContext(ProfileContext);
 
@@ -68,7 +66,7 @@ export default function HomeScreen() {
         const data = await res.json();
         setDailyPhrase(data);
       }
-    } catch (err) {
+    } catch (_err) {
       // Graceful fallback to default phrase
     }
   }, []);

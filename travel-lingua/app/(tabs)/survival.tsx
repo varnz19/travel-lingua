@@ -30,7 +30,6 @@ import {
   X,
   Sparkles,
   RotateCcw,
-  Award,
 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 
@@ -136,7 +135,7 @@ export default function LearnScreen() {
     setSelectedCategory(null);
     try {
       router.setParams({ category: '' });
-    } catch (e) {
+    } catch (_e) {
       // safe fallback
     }
   };

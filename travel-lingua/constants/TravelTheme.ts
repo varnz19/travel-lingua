@@ -24,6 +24,8 @@ export const TravelTheme = {
     surface: '#FEFCF6',        // Solid warm off-white card surface
     surfaceDark: '#1B2A2F',    // Dark card surface (Ink Teal)
     surfaceBorder: '#D8CFB8',  // Sand Line 1px hairline border
+    cardBg: '#FEFCF6',         // Alias to surface for card backgrounds
+    cardBorder: '#D8CFB8',     // Alias to sandLine / surfaceBorder for card outlines
 
     textPrimary: '#1B2A2F',    // Ink Teal
     textSecondary: '#5A676B',  // Muted ink

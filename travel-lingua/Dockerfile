@@ -19,6 +19,8 @@ COPY . .
 
 # Set production environment variables
 ENV NODE_ENV=production
+ENV CI=1
+ENV EXPO_NO_TELEMETRY=1
 ENV EXPO_USE_FAST_RESOLVER=1
 
 # Build static web export with Expo Router

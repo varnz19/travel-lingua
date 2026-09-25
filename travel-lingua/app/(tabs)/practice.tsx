@@ -33,7 +33,6 @@ import {
   Wifi,
   WifiOff,
   X,
-  Repeat,
 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';

@@ -32,7 +32,6 @@ import {
   Edit3,
   Save,
   Globe,
-  ArrowRight,
   Award,
 } from 'lucide-react-native';
 
@@ -138,7 +137,7 @@ export default function ProfileScreen() {
 
   // Real Milestone calculations derived from actual user activities
   const milestonesList = [
-    { id: 'b1', title: 'First Steps', desc: 'Saved 1st phrase', icon: '👣', unlocked: (ProfileContext && totalPracticedCount > 0) },
+    { id: 'b1', title: 'First Steps', desc: 'Saved 1st phrase', icon: '👣', unlocked: totalPracticedCount > 0 },
     { id: 'b2', title: 'Destination Ready', desc: 'Trip details planned', icon: '🇯🇵', unlocked: !!trip?.destination },
     { id: 'b3', title: 'Dining Master', desc: 'Practiced food phrases', icon: '🍜', unlocked: totalPracticedCount >= 3 },
     { id: 'b4', title: 'Polyglot Voyager', desc: 'Active language learner', icon: '✈️', unlocked: totalPracticedCount >= 5 },

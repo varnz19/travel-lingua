@@ -97,8 +97,8 @@ export default function SignupScreen() {
   const [selectedLang, setSelectedLang] = useState('Japanese');
   const [destination, setDestination] = useState('Tokyo, Japan');
   const [departureDate, setDepartureDate] = useState('2026-08-25');
-  const [duration, setDuration] = useState('14 days');
-  const [purpose, setPurpose] = useState('Backpacking');
+  const [duration] = useState('14 days');
+  const [purpose] = useState('Backpacking');
 
   const languages = [
     { name: 'Japanese', flag: '🇯🇵' },
