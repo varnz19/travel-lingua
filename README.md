@@ -41,26 +41,20 @@ Travel-Lingua is **actively under development**.
 
 The project follows a modular development approach where individual capabilities are implemented and validated independently before being integrated into the complete travel experience.
 
-### Feature Status
+### Feature Status & Implementation Matrix
 
-| Module | Functionality | Status |
-|---|---|---|
-| Real-Time Translator | English-Japanese translation, Romaji phonetics and TTS playback | Functional |
-| Survival Phrasebook | Emergency, transit, dining, lodging and tax-free phrases | Functional |
-| Traveler Profile | Trip overview, saved phrases, badges and learning statistics | Functional |
-| Voice Streaming | WebSocket audio streaming with Whisper ASR | In Testing |
-| Camera OCR | Image text extraction and translation | In Testing |
-| Pronunciation Coach | Pronunciation scoring and syllable-level analysis | In Development |
-| AI Scenario Roleplay | Interactive travel conversation practice | In Development |
-| Offline Cache | Local caching for offline travel usage | In Development |
-| Multi-Language Support | Korean, Mandarin, Spanish and French | Planned |
-
-### Status Legend
-
-- **Functional** — Core implementation is available and working.
-- **In Testing** — Implemented and currently being validated or integrated.
-- **In Development** — Active implementation is underway.
-- **Planned** — Scheduled for a future development phase.
+| Module | Functionality | Status | Tech Stack / Engine |
+|---|---|---|---|
+| **Multi-Language Translator** | 8-language real-time translation (JA, EN, ES, FR, DE, IT, KO, ZH), Hepburn Romaji & TTS | **Fully Integrated** | FastAPI, MarianMT / NLLB-200, Redis Cache |
+| **Semantic Search Embeddings** | Natural language intent matching across 29+ travel situations (e.g. "wash hands" ➔ "restroom") | **Fully Integrated** | Sentence-Transformers (`all-MiniLM-L6-v2`), 384-dim Cosine Sim |
+| **Voice Activity Detection (VAD)** | Real-time speech activity detection & noise gating | **Fully Integrated** | Silero-VAD (Snakers4) + Calibrated RMS Energy Filter |
+| **Speech-to-Text (ASR)** | Real-time audio transcription | **Fully Integrated** | OpenAI Faster-Whisper, 16kHz Linear PCM |
+| **Pronunciation Coach (GOP)** | Acoustic accuracy scoring & word/phoneme level feedback | **Fully Integrated** | Goodness of Pronunciation (GOP), Wav2Vec 2.0 |
+| **Vision / Camera OCR** | Camera capture & gallery upload, text extraction, orientation & dynamic translation | **Fully Integrated** | PaddleOCR / Vision Pipeline + MarianMT |
+| **AI Scenario Roleplay** | Conversational travel scenarios (Dining, Hotel, Transit, Shopping) with grammar tips | **Fully Integrated** | FastAPI Roleplay Engine + Difficulty Modes |
+| **Traveler Profile & Auth** | Real Supabase Auth, JWT validation, trip countdown, saved phrases & practice history | **Fully Integrated** | Supabase Auth, PostgreSQL, AsyncStorage |
+| **Offline-First Resilience** | Full offline dictionary & fallback engine when network/backend is unreachable | **Fully Integrated** | Local Dictionary, AsyncStorage, Romaji Engine |
+| **Containerization** | Multi-stage Docker build with Nginx SPA reverse proxy & docker-compose | **Production-Ready** | Docker, Nginx Alpine, Docker-Compose |
 
 ---
 
