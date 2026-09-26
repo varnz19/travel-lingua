@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from './apiConfig';
+
 export interface TranslationResult {
   translatedText: string;
   pronunciation?: string;
@@ -107,9 +109,35 @@ const EN_TO_JA_DICTIONARY: Record<string, { trans: string; pron: string }> = {
 
 export const translatorService = {
   translate: async (text: string, source: string = 'ja', target: string = 'en'): Promise<TranslationResult> => {
-    // Simulate API network latency
-    await new Promise(resolve => setTimeout(resolve, 250));
+    // 0. Attempt Live Backend API Translation
+    try {
+      const baseUrl = getApiBaseUrl();
+      const response = await fetch(`${baseUrl}/api/v1/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: text.trim(),
+          source_lang: source,
+          target_lang: target
+        })
+      });
 
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.translated_text) {
+          return {
+            translatedText: data.translated_text,
+            pronunciation: data.pronunciation || undefined,
+            source: data.source_lang || source,
+            target: data.target_lang || target
+          };
+        }
+      }
+    } catch (_err) {
+      // Offline fallback: seamlessly proceed to local dictionary
+    }
+
+    // 1. Offline Fallback Dictionary
     const clean = text.toLowerCase().trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
 
     // 1. Japanese to English

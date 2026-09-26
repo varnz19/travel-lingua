@@ -7,6 +7,7 @@ import { simulationService, DialogueNode } from '../../../services/simulationSer
 import { ProfileContext } from '../../../context/ProfileContext';
 import { TravelTheme } from '../../../constants/TravelTheme';
 import { AnimatedPressable } from '../../../components/AnimatedPressable';
+import { getApiBaseUrl } from '../../../services/apiConfig';
 
 const T = TravelTheme.colors;
 
@@ -69,7 +70,7 @@ export default function SimulationChat() {
     }
   };
 
-  const handleSendCustom = () => {
+  const handleSendCustom = async () => {
     if (!input.trim()) return;
     const textVal = input.trim();
     setInput('');
@@ -78,14 +79,35 @@ export default function SimulationChat() {
       ...chat,
       { sender: 'user', text: textVal }
     ];
-
-    setTimeout(() => {
-      updatedChat.push({ sender: 'bot', text: `Hai! I understand: "${textVal}". Arigatou gozaimasu!` });
-      setChat([...updatedChat]);
-      Speech.speak("Hai! Arigatou gozaimasu", { language: 'ja', rate: speechSpeed || 1.0 });
-    }, 600);
-
     setChat(updatedChat);
+
+    const scenarioKey = typeof type === 'string' ? type : 'restaurant';
+    let botReplyText = `Hai! I understand: "${textVal}". Arigatou gozaimasu!`;
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/api/v1/roleplay/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenario_id: scenarioKey,
+          message: textVal,
+          conversation_history: updatedChat.map(m => `${m.sender}: ${m.text}`)
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.reply) {
+          botReplyText = data.reply;
+        }
+      }
+    } catch (_err) {
+      // offline fallback
+    }
+
+    const cleanSpeak = botReplyText.split('(')[0].replace(/[^\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\w\s]/g, '').trim();
+    setChat([...updatedChat, { sender: 'bot', text: botReplyText }]);
+    Speech.speak(cleanSpeak || "Hai! Arigatou gozaimasu", { language: 'ja', rate: speechSpeed || 1.0 });
   };
 
   const handleReplayTts = (text: string) => {

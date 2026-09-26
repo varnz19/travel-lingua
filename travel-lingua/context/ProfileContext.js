@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useEffect, useState } from 'react';
 import { supabase } from '../services/supabaseClient';
+import { getApiBaseUrl } from '../services/apiConfig';
 
 export const ProfileContext = createContext();
 
@@ -377,7 +378,25 @@ export const ProfileProvider = ({ children }) => {
         }
       }
 
-      // 3. Persist local state for UI responsiveness (with 0 dummy clutter)
+      // 3. Sync with FastAPI Backend DB Gateway
+      try {
+        await fetch(`${getApiBaseUrl()}/api/v1/auth/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: finalEmail,
+            username: signupData.username.trim(),
+            name: signupData.name.trim(),
+            password: finalPassword,
+            destination: tripData.destination || 'Tokyo, Japan',
+            learning_language: signupData.learningLanguage || 'Japanese',
+          })
+        });
+      } catch (_backendErr) {
+        // Non-blocking sync fallback
+      }
+
+      // 4. Persist local state for UI responsiveness (with 0 dummy clutter)
       saveState({
         ...state,
         phoneNumber: signupData.phoneNumber || '',
