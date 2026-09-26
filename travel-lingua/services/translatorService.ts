@@ -107,6 +107,61 @@ const EN_TO_JA_DICTIONARY: Record<string, { trans: string; pron: string }> = {
   "goodbye": { trans: "さようなら (Sayounara)", pron: "sah-yoh-nah-rah" },
 };
 
+const MULTILANG_DICTIONARY: Record<string, Record<string, { trans: string; pron?: string }>> = {
+  es: {
+    hello: { trans: "Hola", pron: "OH-lah" },
+    "thank you": { trans: "Gracias", pron: "GRAH-see-ahs" },
+    please: { trans: "Por favor", pron: "por fah-VOR" },
+    "where is the restroom": { trans: "¿Dónde está el baño?", pron: "DOHN-deh es-TAH el BAHN-yoh" },
+    "where is the station": { trans: "¿Dónde está la estación?", pron: "DOHN-deh es-TAH lah es-tah-SYOHN" },
+    "where is the train station": { trans: "¿Dónde está la estación de tren?", pron: "DOHN-deh es-TAH lah es-tah-SYOHN deh trehn" },
+    "the bill please": { trans: "La cuenta, por favor", pron: "lah KWEHN-tah por fah-VOR" },
+    "water please": { trans: "Agua, por favor", pron: "AH-gwah por fah-VOR" },
+    "help me": { trans: "¡Ayúdeme!", pron: "ah-YOO-deh-meh" },
+    "how much is this": { trans: "¿Cuánto cuesta esto?", pron: "KWAHN-toh KWEHS-tah EHS-toh" },
+  },
+  fr: {
+    hello: { trans: "Bonjour", pron: "bohn-zhoor" },
+    "thank you": { trans: "Merci beaucoup", pron: "mair-see boh-koo" },
+    please: { trans: "S'il vous plaît", pron: "seel voo pleh" },
+    "where is the restroom": { trans: "Où sont les toilettes ?", pron: "oo sohn lay twah-let" },
+    "where is the station": { trans: "Où est la gare ?", pron: "oo eh lah gahr" },
+    "where is the train station": { trans: "Où est la gare ferroviaire ?", pron: "oo eh lah gahr" },
+    "the bill please": { trans: "L'addition, s'il vous plaît", pron: "lah-dee-syohn seel voo pleh" },
+    "water please": { trans: "De l'eau, s'il vous plaît", pron: "duh loh seel voo pleh" },
+    "help me": { trans: "Aidez-moi !", pron: "ay-day mwah" },
+  },
+  de: {
+    hello: { trans: "Hallo", pron: "HAH-loh" },
+    "thank you": { trans: "Vielen Dank", pron: "FEE-len dahnk" },
+    please: { trans: "Bitte", pron: "BIH-tuh" },
+    "where is the restroom": { trans: "Wo ist die Toilette?", pron: "vo ist dee twah-LET-tuh" },
+    "where is the station": { trans: "Wo ist der Bahnhof?", pron: "vo ist der BAHN-hof" },
+    "the bill please": { trans: "Die Rechnung, bitte", pron: "dee REKH-noong BIH-tuh" },
+    "water please": { trans: "Wasser, bitte", pron: "VAH-ser BIH-tuh" },
+  },
+  it: {
+    hello: { trans: "Ciao / Buongiorno", pron: "CHOW" },
+    "thank you": { trans: "Grazie mille", pron: "GRAHT-syeh MEE-leh" },
+    please: { trans: "Per favore", pron: "pehr fah-VOH-reh" },
+    "where is the restroom": { trans: "Dov'è il bagno?", pron: "doh-VEH eel BAHN-yoh" },
+    "the bill please": { trans: "Il conto, per favore", pron: "eel KOHN-toh pehr fah-VOH-reh" },
+    "water please": { trans: "Acqua, per favore", pron: "AHK-wah pehr fah-VOH-reh" },
+  },
+  ko: {
+    hello: { trans: "안녕하세요", pron: "Annyeonghaseyo" },
+    "thank you": { trans: "감사합니다", pron: "Gamsahamnida" },
+    "where is the restroom": { trans: "화장실이 어디예요?", pron: "Hwajangsil-i eodi-yeyo?" },
+    "water please": { trans: "물 좀 주세요", pron: "Mul jom juseyo" },
+  },
+  zh: {
+    hello: { trans: "你好", pron: "Nǐ hǎo" },
+    "thank you": { trans: "谢谢", pron: "Xièxiè" },
+    "where is the restroom": { trans: "洗手间在哪里？", pron: "Xǐshǒujiān zài nǎlǐ?" },
+    "water please": { trans: "请给我水", pron: "Qǐng gěi wǒ shuǐ" },
+  },
+};
+
 export const translatorService = {
   translate: async (text: string, source: string = 'ja', target: string = 'en'): Promise<TranslationResult> => {
     // 0. Attempt Live Backend API Translation
@@ -141,7 +196,7 @@ export const translatorService = {
     const clean = text.toLowerCase().trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
 
     // 1. Japanese to English
-    if (source.toLowerCase().startsWith('ja') || target.toLowerCase().startsWith('en')) {
+    if (source === 'ja' && target === 'en') {
       if (JA_TO_EN_DICTIONARY[text.trim()]) {
         const item = JA_TO_EN_DICTIONARY[text.trim()];
         return { translatedText: item.trans, pronunciation: item.pron, source: 'ja', target: 'en' };
@@ -150,7 +205,6 @@ export const translatorService = {
         const item = JA_TO_EN_DICTIONARY[clean];
         return { translatedText: item.trans, pronunciation: item.pron, source: 'ja', target: 'en' };
       }
-      // Partial matching
       for (const [key, val] of Object.entries(JA_TO_EN_DICTIONARY)) {
         if (text.includes(key) || clean.includes(key)) {
           return { translatedText: val.trans, pronunciation: val.pron, source: 'ja', target: 'en' };
@@ -159,7 +213,7 @@ export const translatorService = {
     }
 
     // 2. English to Japanese
-    if (source.toLowerCase().startsWith('en') || target.toLowerCase().startsWith('ja')) {
+    if (source === 'en' && target === 'ja') {
       if (EN_TO_JA_DICTIONARY[clean]) {
         const item = EN_TO_JA_DICTIONARY[clean];
         return { translatedText: item.trans, pronunciation: item.pron, source: 'en', target: 'ja' };
@@ -171,20 +225,34 @@ export const translatorService = {
       }
     }
 
+    // 3. Multi-language English -> Target
+    if (source === 'en' && MULTILANG_DICTIONARY[target]) {
+      const langDict = MULTILANG_DICTIONARY[target];
+      if (langDict[clean]) {
+        const item = langDict[clean];
+        return { translatedText: item.trans, pronunciation: item.pron, source, target };
+      }
+      for (const [key, val] of Object.entries(langDict)) {
+        if (clean.includes(key)) {
+          return { translatedText: val.trans, pronunciation: val.pron, source, target };
+        }
+      }
+    }
+
     // Dynamic fallback for any text
-    if (source.toLowerCase().startsWith('ja')) {
+    if (source === 'ja') {
       return {
-        translatedText: `[English Translation] ${text}`,
+        translatedText: `[${target.toUpperCase()}] ${text}`,
         pronunciation: `Phonetics: ${text}`,
-        source: 'ja',
-        target: 'en'
+        source,
+        target
       };
     } else {
       return {
-        translatedText: `${text} です (Desu)`,
+        translatedText: `[${target.toUpperCase()}] ${text}`,
         pronunciation: `Phonetics for: ${text}`,
-        source: 'en',
-        target: 'ja'
+        source,
+        target
       };
     }
   }

@@ -123,3 +123,31 @@ def test_embeddings_vectorizer():
     assert isinstance(vec, list)
     assert len(vec) == 384
     assert all(isinstance(val, float) for val in vec)
+
+
+def test_semantic_search_embeddings():
+    from app.services.ml.embeddings.vectorizer import vectorizer
+    corpus = [
+        {"phrase": "Where is the restroom / toilet / washroom?", "id": "toilet"},
+        {"phrase": "How much does this cost?", "id": "cost"},
+        {"phrase": "The check / bill please", "id": "bill"},
+    ]
+    results = vectorizer.semantic_search("wash hands", corpus, top_k=2)
+    assert len(results) > 0
+    # Top match should be the restroom phrase
+    assert results[0]["id"] == "toilet"
+    assert results[0]["similarity_score"] > 0.2
+
+
+def test_voice_activity_detection():
+    from app.services.ml.asr.audio_utils import is_speech_active, validate_and_standardize_audio
+    # Test silence (all zeros)
+    silence = bytes(32000)
+    assert is_speech_active(silence) is False
+
+    # Test standardized audio output shape and type
+    norm_audio, sr = validate_and_standardize_audio(silence)
+    assert sr == 16000
+    assert len(norm_audio) == 16000  # 16000 float samples
+
+

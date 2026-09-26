@@ -2,7 +2,7 @@ import io
 import wave
 import logging
 import numpy as np
-from typing import Tuple
+from typing import Tuple, Union
 from app.services.ml.model_manager import model_manager
 
 logger = logging.getLogger("travel-lingua.ml.asr.audio_utils")
@@ -56,24 +56,28 @@ def validate_and_standardize_audio(audio_bytes: bytes, target_sample_rate: int =
         return data, target_sample_rate
 
 
-def is_speech_active_energy(audio_array: np.ndarray, energy_threshold: float = 0.005) -> bool:
+def is_speech_active_energy(audio_array: Union[np.ndarray, bytes], energy_threshold: float = 0.005) -> bool:
     """
     Lightweight energy-based VAD filter.
     Calculates Root Mean Square (RMS) energy.
     """
+    if isinstance(audio_array, bytes):
+        audio_array, _ = validate_and_standardize_audio(audio_array)
     if len(audio_array) == 0:
         return False
     rms = np.sqrt(np.mean(audio_array ** 2))
     return bool(rms > energy_threshold)
 
 
-def is_speech_active(audio_array: np.ndarray, threshold: float = 0.5) -> bool:
+def is_speech_active(audio_array: Union[np.ndarray, bytes], threshold: float = 0.5) -> bool:
     """
     Voice Activity Detection pipeline:
     1. Uses Silero-VAD deep neural network when available to filter background noise
        and prevent Whisper hallucinations during silent intervals.
     2. Falls back cleanly to calibrated RMS energy check.
     """
+    if isinstance(audio_array, bytes):
+        audio_array, _ = validate_and_standardize_audio(audio_array)
     if len(audio_array) == 0:
         return False
 

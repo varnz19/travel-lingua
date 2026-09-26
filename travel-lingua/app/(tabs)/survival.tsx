@@ -11,6 +11,7 @@ import {
   Modal,
   Animated,
   ActivityIndicator,
+  TextInput,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ProfileContext } from '../../context/ProfileContext';
@@ -30,6 +31,7 @@ import {
   X,
   Sparkles,
   RotateCcw,
+  Search,
 } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { getApiBaseUrl } from '../../services/apiConfig';
@@ -54,8 +56,34 @@ export default function LearnScreen() {
   const [activeTab, setActiveTab] = useState<'categories' | 'packs'>('categories');
   const [savedCompleted, setSavedCompleted] = useState<string[]>([]);
   const [downloadingPackId, setDownloadingPackId] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [categoriesList, setCategoriesList] = useState(survivalService.getCategories());
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Semantic Search via Dense Sentence Embeddings
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  const handleSearchChange = (text: string) => {
+    setSearchQuery(text);
+    if (!text.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    fetch(`${getApiBaseUrl()}/api/v1/phrases/search?q=${encodeURIComponent(text.trim())}`)
+      .then(res => res.json())
+      .then(data => {
+        setIsSearching(false);
+        if (data && data.results) {
+          setSearchResults(data.results);
+        }
+      })
+      .catch(() => {
+        setIsSearching(false);
+      });
+  };
 
   // Automatically open the targeted category if passed via navigation param
   useEffect(() => {
@@ -352,10 +380,74 @@ export default function LearnScreen() {
           </View>
         )}
 
+        {/* ── Semantic Concept Search Bar (Dense Embeddings) ── */}
+        {!selectedCategory && activeTab === 'categories' && (
+          <View style={styles.searchBarWrapper}>
+            <View style={styles.searchBarBox}>
+              <Search size={16} color={T.textMuted} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search concepts (e.g. wash hands, bill, taxi, passport)..."
+                placeholderTextColor={T.textMuted}
+                value={searchQuery}
+                onChangeText={handleSearchChange}
+              />
+              {isSearching && <ActivityIndicator size="small" color={T.postmark} />}
+              {searchQuery.length > 0 && !isSearching && (
+                <TouchableOpacity onPress={() => handleSearchChange('')}>
+                  <X size={15} color={T.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* ── Semantic Search Results (Embeddings Ranked) ── */}
+        {!selectedCategory && activeTab === 'categories' && searchQuery.trim().length > 0 && (
+          <View style={styles.searchResultsContainer}>
+            <View style={styles.searchHeaderRow}>
+              <Sparkles size={13} color={T.postmark} />
+              <Text style={styles.searchHeaderText}>
+                EMBEDDING MATCHES ({searchResults.length})
+              </Text>
+            </View>
+
+            {searchResults.map((item) => (
+              <View key={item.id} style={styles.searchResultCard}>
+                <View style={{ flex: 1 }}>
+                  <View style={styles.matchScoreRow}>
+                    <Text style={styles.matchCategoryBadge}>{(item.category || 'phrase').toUpperCase()}</Text>
+                    {item.similarity_score !== undefined && (
+                      <Text style={styles.matchScoreText}>
+                        {Math.round(item.similarity_score * 100)}% match
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.searchResultJapanese}>{item.japanese}</Text>
+                  <Text style={styles.searchResultEnglish}>{item.english}</Text>
+                  <Text style={styles.searchResultPhonetic}>🗣️ {item.pronunciation}</Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.searchAudioBtn}
+                  onPress={() => {
+                    HapticsManager.light();
+                    Speech.speak(item.audio_text || item.japanese.split('(')[0], {
+                      language: 'ja-JP',
+                      rate: speechRate
+                    });
+                  }}
+                >
+                  <Volume2 size={16} color={T.postmark} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* ═════════════════════════════════════════════════ */}
         {/* ── VIEW 1: CLEAN UNIFORM CATEGORIES DIRECTORY ─── */}
         {/* ═════════════════════════════════════════════════ */}
-        {!selectedCategory && activeTab === 'categories' && (
+        {!selectedCategory && activeTab === 'categories' && searchQuery.trim().length === 0 && (
           <View style={styles.categoriesList}>
             {categories.map((cat) => {
               const isPackDownloaded = downloadedPacks.includes(cat.packId);
@@ -1304,5 +1396,97 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
+  },
+  searchBarWrapper: {
+    marginBottom: 16,
+  },
+  searchBarBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: T.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    paddingHorizontal: 12,
+    height: 44,
+    gap: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: T.ink,
+  },
+  searchResultsContainer: {
+    marginBottom: 20,
+    gap: 10,
+  },
+  searchHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  searchHeaderText: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    color: T.postmark,
+    letterSpacing: 0.8,
+  },
+  searchResultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: T.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: T.sandLine,
+    ...TravelTheme.shadows.resting,
+  },
+  matchScoreRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  matchCategoryBadge: {
+    fontSize: 9,
+    fontFamily: 'Inter_800ExtraBold',
+    color: T.postmark,
+    backgroundColor: T.primaryLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  matchScoreText: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    color: T.sage,
+  },
+  searchResultJapanese: {
+    fontSize: 16,
+    fontFamily: 'Spectral_700Bold',
+    color: T.ink,
+    marginBottom: 2,
+  },
+  searchResultEnglish: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: T.textSecondary,
+    marginBottom: 2,
+  },
+  searchResultPhonetic: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: T.textMuted,
+  },
+  searchAudioBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: T.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 10,
   },
 });

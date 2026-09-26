@@ -39,6 +39,46 @@ class SentenceVectorizer:
         """Encodes multiple phrases into a list of 384-dimensional vectors."""
         return [self.generate_embedding(t) for t in texts]
 
+    def semantic_search(self, query: str, candidates: List[dict], top_k: int = 5) -> List[dict]:
+        """
+        Ranks candidate travel phrases against user query using dense vector cosine similarity
+        combined with lexical term matching.
+        """
+        if not query or not candidates:
+            return []
+
+        q_clean = query.lower().strip()
+        q_tokens = set(q_clean.split())
+        q_vec = np.array(self.generate_embedding(q_clean), dtype=np.float32)
+
+        scored = []
+        for item in candidates:
+            # Combine searchable fields (english, japanese, romaji, category)
+            searchable_text = f"{item.get('english', '')} {item.get('japanese', '')} {item.get('pronunciation', '')} {item.get('audio_text', '')} {item.get('category', '')}"
+            cand_vec = np.array(self.generate_embedding(searchable_text), dtype=np.float32)
+
+            # Cosine similarity
+            cosine_sim = float(np.dot(q_vec, cand_vec))
+
+            # Lexical boost
+            cand_tokens = set(searchable_text.lower().split())
+            overlap = len(q_tokens.intersection(cand_tokens))
+            lexical_boost = 0.25 * overlap if overlap else 0.0
+
+            # Substring match boost
+            substring_boost = 0.3 if q_clean in searchable_text.lower() else 0.0
+
+            total_score = round(float(min(1.0, max(0.0, (cosine_sim + 1.0) / 2.0 * 0.5 + lexical_boost + substring_boost))), 3)
+
+            scored.append({
+                **item,
+                "similarity_score": total_score
+            })
+
+        # Sort descending by score
+        scored.sort(key=lambda x: x["similarity_score"], reverse=True)
+        return scored[:top_k]
+
 
 vectorizer = SentenceVectorizer()
 
@@ -46,3 +86,8 @@ vectorizer = SentenceVectorizer()
 def generate_phrase_vector(phrase: str) -> List[float]:
     """Exposed interface for Person 2's pgvector pipeline."""
     return vectorizer.generate_embedding(phrase)
+
+
+def semantic_search_phrases(query: str, candidates: List[dict], top_k: int = 5) -> List[dict]:
+    """Exposed semantic search interface for Travel-Lingua knowledge base."""
+    return vectorizer.semantic_search(query, candidates, top_k=top_k)
