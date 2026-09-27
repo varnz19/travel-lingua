@@ -10,3 +10,10 @@ supabase>=2.3.0
 python-multipart>=0.0.6
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
+faster-whisper>=1.0.0
+ctranslate2>=4.0.0
+onnxruntime>=1.16.0
+edge-tts>=7.0.0
+av>=11.0.0
+numpy>=1.24.0
+

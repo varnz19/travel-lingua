@@ -31,8 +31,8 @@ class ModelManager:
         return cls._device
 
     @classmethod
-    def get_whisper(cls, model_size: str = "base", compute_type: str = "int8"):
-        """Lazy load Faster-Whisper singleton instance."""
+    def get_whisper(cls, model_size: str = "tiny", compute_type: str = "int8"):
+        """Lazy load Faster-Whisper singleton instance (CTranslate2 INT8)."""
         cache_key = f"whisper_{model_size}_{compute_type}"
         if cache_key not in cls._instances:
             logger.info(f"Loading Faster-Whisper ({model_size}, {compute_type})...")
@@ -40,8 +40,9 @@ class ModelManager:
                 from faster_whisper import WhisperModel
                 # CTranslate2 on Apple Silicon / CPU handles int8 inference efficiently
                 cls._instances[cache_key] = WhisperModel(model_size, device="cpu", compute_type=compute_type)
+                logger.info(f"Faster-Whisper ({model_size}) initialized successfully.")
             except Exception as e:
-                logger.warning(f"Could not load live Faster-Whisper: {e}. Falling back to simulation mode.")
+                logger.warning(f"Could not load live Faster-Whisper: {e}.")
                 cls._instances[cache_key] = None
         return cls._instances[cache_key]
 
@@ -80,19 +81,14 @@ class ModelManager:
 
     @classmethod
     def get_silero_vad(cls):
-        """Lazy load Silero-VAD model singleton for voice activity detection."""
-        cache_key = "silero_vad"
+        """Lazy load Silero-VAD ONNX neural model singleton for voice activity detection."""
+        cache_key = "silero_vad_onnx"
         if cache_key not in cls._instances:
-            logger.info("Loading Silero-VAD model...")
+            logger.info("Loading Silero-VAD ONNX neural model...")
             try:
-                import torch
-                model, utils = torch.hub.load(
-                    repo_or_dir="snakers4/silero-vad",
-                    model="silero_vad",
-                    force_reload=False,
-                    onnx=False
-                )
-                cls._instances[cache_key] = (model, utils)
+                from faster_whisper.vad import get_vad_model
+                cls._instances[cache_key] = get_vad_model()
+                logger.info("Silero-VAD ONNX model initialized successfully.")
             except Exception as e:
                 logger.warning(f"Could not load live Silero-VAD: {e}. Falling back to energy VAD.")
                 cls._instances[cache_key] = None

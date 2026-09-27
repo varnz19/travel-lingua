@@ -22,15 +22,26 @@ MACOS_VOICE_MAP: Dict[str, str] = {
     "zh": "Meijia",
 }
 
+EDGE_VOICE_MAP: Dict[str, str] = {
+    "ja": "ja-JP-NanamiNeural",
+    "en": "en-US-AriaNeural",
+    "es": "es-ES-ElviraNeural",
+    "fr": "fr-FR-DeniseNeural",
+    "de": "de-DE-KatjaNeural",
+    "it": "it-IT-ElsaNeural",
+    "ko": "ko-KR-SunHiNeural",
+    "zh": "zh-CN-XiaoxiaoNeural",
+}
+
 
 class PiperTTSService:
     """
-    Multi-Tier Text-to-Speech synthesis service.
-    Tier 1: Piper TTS (neural ONNX)
-    Tier 2: System Speech (macOS `say` utility with native voices)
-    Tier 3: Formant-based acoustic synthesis fallback
+    Multi-Tier Text-to-Speech synthesis service across all operating systems:
+    Tier 1: Cross-platform Neural TTS (Edge-TTS, runs anywhere in Linux, Docker, Windows, macOS)
+    Tier 2: System Speech (macOS `say` utility with native offline voices)
+    Tier 3: Local Piper TTS (neural ONNX binary)
+    Tier 4: Formant-based acoustic synthesis fallback (pure Python, zero dependencies)
     Supports multiple languages: ja, en, es, fr, de, it, ko, zh
-    Generates 16 kHz, 16-bit linear PCM WAV.
     """
 
     def __init__(
@@ -151,6 +162,62 @@ class PiperTTSService:
 
         return buffer.getvalue()
 
+    def _synthesize_via_edge_tts(self, text: str, language: str, speed_multiplier: float = 1.0) -> Optional[bytes]:
+        """Cross-platform neural TTS using Edge-TTS (runs on Linux, Docker, Windows, macOS)."""
+        try:
+            import asyncio
+            import concurrent.futures
+            import edge_tts
+
+            voice = EDGE_VOICE_MAP.get(language.lower(), "en-US-AriaNeural")
+            rate_pct = int((speed_multiplier - 1.0) * 100)
+            rate_str = f"{rate_pct:+d}%"
+
+            async def _run_edge():
+                comm = edge_tts.Communicate(text, voice, rate=rate_str)
+                chunks = []
+                async for chunk in comm.stream():
+                    if chunk["type"] == "audio":
+                        chunks.append(chunk["data"])
+                return b"".join(chunks)
+
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            mp3_bytes = None
+            if loop and loop.is_running():
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    mp3_bytes = pool.submit(lambda: asyncio.run(_run_edge())).result(timeout=6)
+            else:
+                mp3_bytes = asyncio.run(_run_edge())
+
+            if not mp3_bytes or len(mp3_bytes) < 100:
+                return None
+
+            # Convert MP3 to standard 16kHz 16-bit linear PCM RIFF WAV using in-memory PyAV
+            try:
+                import av
+                input_container = av.open(io.BytesIO(mp3_bytes), format='mp3')
+                out_buffer = io.BytesIO()
+                with wave.open(out_buffer, 'wb') as wf:
+                    wf.setnchannels(1)
+                    wf.setsampwidth(2)
+                    wf.setframerate(16000)
+                    resampler = av.AudioResampler(format='s16', layout='mono', rate=16000)
+                    for frame in input_container.decode(audio=0):
+                        resampled_frames = resampler.resample(frame)
+                        for rf in resampled_frames:
+                            wf.writeframes(rf.to_ndarray().tobytes())
+                return out_buffer.getvalue()
+            except Exception as e:
+                logger.debug(f"PyAV MP3 to WAV conversion error: {e}")
+                return mp3_bytes
+        except Exception as e:
+            logger.debug(f"Edge-TTS synthesis error: {e}. Falling back.")
+            return None
+
     def synthesize_speech_wav(
         self,
         text: str,
@@ -168,25 +235,30 @@ class PiperTTSService:
             speed_multiplier: Playback rate (0.5 to 2.0, default 1.0).
             
         Returns:
-            Valid WAV file bytes (16-bit Mono linear PCM).
+            Valid audio bytes (MP3 / WAV format).
         """
         clean_text = self._clean_text(text)
         if not clean_text:
             return b""
 
-        # 1. Try Piper TTS if configured
+        # 1. Try cross-platform Neural Edge-TTS (Linux / Docker / Windows / macOS)
+        edge_audio = self._synthesize_via_edge_tts(clean_text, language, speed_multiplier)
+        if edge_audio and len(edge_audio) > 100:
+            return edge_audio
+
+        # 2. Try macOS system voice (if running on macOS Darwin)
+        system_wav = self._synthesize_via_system_say(clean_text, language, speed_multiplier)
+        if system_wav and len(system_wav) > 100:
+            return system_wav
+
+        # 3. Try Piper TTS if local binary is configured
         if self.piper_bin:
             voice = self.voice_ja if language.lower() == "ja" else self.voice_en
             piper_wav = self._synthesize_via_piper_cli(clean_text, voice, sample_rate)
             if piper_wav:
                 return piper_wav
 
-        # 2. Try macOS system voice
-        system_wav = self._synthesize_via_system_say(clean_text, language, speed_multiplier)
-        if system_wav:
-            return system_wav
-
-        # 3. Acoustic fallback
+        # 4. Pure Python procedural acoustic formant synthesis fallback
         return self._synthesize_fallback_audio(clean_text, sample_rate=sample_rate, speed_multiplier=speed_multiplier)
 
 

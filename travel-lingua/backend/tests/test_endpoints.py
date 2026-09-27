@@ -65,3 +65,40 @@ def test_tts_stream_endpoint():
     assert response.status_code == 200
     assert response.headers["content-type"] == "audio/wav"
     assert len(response.content) > 44
+
+
+def test_asr_vad_detect_endpoint():
+    import base64
+    import numpy as np
+    import wave
+    import io
+
+    # Generate test silence WAV
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(16000)
+        wf.writeframes(np.zeros(16000, dtype=np.int16).tobytes())
+
+    b64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
+    response = client.post("/api/v1/asr/detect-voice", json={"audio_base64": b64, "threshold": 0.5})
+    assert response.status_code == 200
+    data = response.json()
+    assert "is_speech" in data
+
+
+def test_asr_transcribe_endpoint():
+    import base64
+    from app.services.ml.tts.piper_service import synthesize_speech
+
+    # Synthesize real speech WAV to test ASR transcription
+    wav_bytes = synthesize_speech("Hello", language="en")
+    b64 = base64.b64encode(wav_bytes).decode("utf-8")
+
+    response = client.post("/api/v1/asr/transcribe", json={"audio_base64": b64, "language": "en"})
+    assert response.status_code == 200
+    data = response.json()
+    assert "text" in data
+    assert data["status"] == "success"
+

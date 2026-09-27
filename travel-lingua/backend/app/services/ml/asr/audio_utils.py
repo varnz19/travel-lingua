@@ -72,30 +72,25 @@ def is_speech_active_energy(audio_array: Union[np.ndarray, bytes], energy_thresh
 def is_speech_active(audio_array: Union[np.ndarray, bytes], threshold: float = 0.5) -> bool:
     """
     Voice Activity Detection pipeline:
-    1. Uses Silero-VAD deep neural network when available to filter background noise
+    1. Uses official Silero-VAD deep neural network (ONNX Runtime) to filter background noise
        and prevent Whisper hallucinations during silent intervals.
-    2. Falls back cleanly to calibrated RMS energy check.
+    2. Runs cross-platform on Linux, macOS, Windows, and Docker without requiring PyTorch.
+    3. Falls back cleanly to calibrated RMS energy check.
     """
     if isinstance(audio_array, bytes):
         audio_array, _ = validate_and_standardize_audio(audio_array)
     if len(audio_array) == 0:
         return False
 
-    silero_bundle = model_manager.get_silero_vad()
-    if silero_bundle is not None:
+    vad_model = model_manager.get_silero_vad()
+    if vad_model is not None:
         try:
-            import torch
-            model, utils = silero_bundle
-            get_speech_timestamps = utils[0]
-            wav_tensor = torch.from_numpy(audio_array).float()
-            speech_timestamps = get_speech_timestamps(
-                wav_tensor,
-                model,
-                sampling_rate=16000,
-                threshold=threshold
-            )
+            from faster_whisper.vad import get_speech_timestamps, VadOptions
+            # Pass numpy array directly to Silero-VAD ONNX
+            options = VadOptions(threshold=threshold, min_speech_duration_ms=150)
+            speech_timestamps = get_speech_timestamps(audio_array, vad_options=options)
             return len(speech_timestamps) > 0
         except Exception as e:
-            logger.debug(f"Silero-VAD inference exception ({e}), falling back to RMS energy.")
+            logger.debug(f"Silero-VAD ONNX inference exception ({e}), falling back to RMS energy.")
 
     return is_speech_active_energy(audio_array)
