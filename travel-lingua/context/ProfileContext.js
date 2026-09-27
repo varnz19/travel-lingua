@@ -89,14 +89,59 @@ export const ProfileProvider = ({ children }) => {
     const loadState = async () => {
       try {
         const storedState = await AsyncStorage.getItem(STORAGE_KEYS.STATE);
+        let baseState = DEFAULT_STATE;
         if (storedState) {
           const parsed = JSON.parse(storedState);
-          // Always maintain zero dummy data for clean fields
-          setState(prev => ({
-            ...prev,
-            ...parsed,
+          baseState = { ...DEFAULT_STATE, ...parsed };
+        }
+
+        // Live check active Supabase authentication session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const userId = session.user.id;
+          let profileUpdates = {};
+          let savedPhrasesFromDb = baseState.savedPhrases || [];
+
+          try {
+            const { data: prof } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+            if (prof) {
+              profileUpdates = {
+                username: prof.username || baseState.username,
+                name: prof.full_name || baseState.name,
+                learningLanguage: prof.target_language === 'ja' ? 'Japanese' : (prof.target_language || baseState.learningLanguage),
+              };
+            }
+          } catch (_pErr) {}
+
+          try {
+            const { data: dbPhrases } = await supabase
+              .from('saved_phrases')
+              .select('*')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false });
+            if (dbPhrases && dbPhrases.length > 0) {
+              savedPhrasesFromDb = dbPhrases.map(p => ({
+                id: p.id,
+                phrase: p.custom_original_text || 'Saved Phrase',
+                translation: p.custom_translated_text || '',
+                pronunciation: p.custom_romanized || '',
+                notes: p.notes || ''
+              }));
+            }
+          } catch (_phErr) {}
+
+          setState({
+            ...baseState,
+            ...profileUpdates,
+            savedPhrases: savedPhrasesFromDb,
+            email: session.user.email || baseState.email,
+            isLoggedIn: true
+          });
+        } else {
+          setState({
+            ...baseState,
             isLoggedIn: false
-          }));
+          });
         }
       } catch (error) {
         console.error('Error loading App State from AsyncStorage:', error);
@@ -150,9 +195,10 @@ export const ProfileProvider = ({ children }) => {
     saveState(newState);
   };
 
-  const addSavedPhrase = (phraseText, translationText, pronunciation = '') => {
+  const addSavedPhrase = async (phraseText, translationText, pronunciation = '') => {
+    const localId = Date.now().toString();
     const newPhrase = {
-      id: Date.now().toString(),
+      id: localId,
       phrase: phraseText,
       translation: translationText,
       language: state.learningLanguage,
@@ -168,14 +214,50 @@ export const ProfileProvider = ({ children }) => {
     };
 
     saveState(newState);
+
+    // Live sync to Supabase saved_phrases table
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const { data: insertRes, error } = await supabase.from('saved_phrases').insert({
+          user_id: session.user.id,
+          custom_original_text: phraseText,
+          custom_translated_text: translationText,
+          custom_romanized: pronunciation,
+          notes: 'Saved from Travel Lingua',
+          is_favorite: true
+        }).select();
+
+        if (insertRes && insertRes[0]?.id) {
+          // Update local id to the Supabase UUID
+          const dbId = insertRes[0].id;
+          saveState({
+            ...newState,
+            savedPhrases: updatedPhrases.map(p => p.id === localId ? { ...p, id: dbId } : p)
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase saved_phrases sync notice:', e);
+    }
   };
 
-  const deleteSavedPhrase = (id) => {
+  const deleteSavedPhrase = async (id) => {
     const updatedPhrases = state.savedPhrases.filter(item => item.id !== id);
     saveState({
       ...state,
       savedPhrases: updatedPhrases
     });
+
+    // Delete from Supabase saved_phrases
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        await supabase.from('saved_phrases').delete().eq('id', id);
+      }
+    } catch (e) {
+      console.warn('Supabase delete saved_phrase notice:', e);
+    }
   };
 
   const updateTrip = (tripData) => {
@@ -241,7 +323,7 @@ export const ProfileProvider = ({ children }) => {
     });
   };
 
-  const recordPracticeResult = (phraseId, score) => {
+  const recordPracticeResult = async (phraseId, score, targetText = '', accuracyRating = '') => {
     const current = state.practicedPhrases || {};
     const existing = current[phraseId] || { attempts: 0, lastScore: 0 };
     const updated = {
@@ -256,6 +338,23 @@ export const ProfileProvider = ({ children }) => {
       practicedPhrases: updated,
       xp: state.xp + 15
     });
+
+    // Live sync to Supabase practice_history table
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        const rating = accuracyRating || (score >= 90 ? 'Excellent' : score >= 75 ? 'Good' : 'Needs Practice');
+        await supabase.from('practice_history').insert({
+          user_id: session.user.id,
+          target_text: targetText || phraseId,
+          language: state.learningLanguage === 'Japanese' ? 'ja' : 'en',
+          overall_score: score,
+          accuracy_rating: rating
+        });
+      }
+    } catch (e) {
+      console.warn('Supabase practice_history notice:', e);
+    }
   };
 
   const getDaysUntilDeparture = () => {
@@ -317,8 +416,46 @@ export const ProfileProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
+      const userId = data.user?.id;
+      let profileUpdates = {};
+      let remoteSavedPhrases = [];
+
+      // Fetch live user profile from Supabase profiles table
+      if (userId) {
+        try {
+          const { data: prof } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
+          if (prof) {
+            profileUpdates = {
+              username: prof.username || state.username,
+              name: prof.full_name || state.name,
+              learningLanguage: prof.target_language === 'ja' ? 'Japanese' : 'English'
+            };
+          }
+        } catch (_pe) {}
+
+        // Fetch live saved phrases from Supabase saved_phrases table
+        try {
+          const { data: phrases } = await supabase
+            .from('saved_phrases')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+          if (phrases && phrases.length > 0) {
+            remoteSavedPhrases = phrases.map(p => ({
+              id: p.id,
+              phrase: p.custom_original_text || 'Saved Phrase',
+              translation: p.custom_translated_text || '',
+              pronunciation: p.custom_romanized || '',
+              notes: p.notes || ''
+            }));
+          }
+        } catch (_se) {}
+      }
+
       saveState({
         ...state,
+        ...profileUpdates,
+        savedPhrases: remoteSavedPhrases.length > 0 ? remoteSavedPhrases : state.savedPhrases,
         email: data.user?.email || state.email,
         isLoggedIn: true
       });
@@ -362,19 +499,20 @@ export const ProfileProvider = ({ children }) => {
 
       const userId = authData.user?.id;
 
-      // 2. Insert into public.profiles
+      // 2. Update public.profiles row
       if (userId) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: userId,
-            username: signupData.username.trim(),
-            full_name: signupData.name.trim(),
-            native_language: 'en'
-          }, { onConflict: 'id' });
-
-        if (profileError) {
-          console.warn('Profile write warning:', profileError.message);
+        try {
+          await supabase
+            .from('profiles')
+            .update({
+              username: signupData.username.trim(),
+              full_name: signupData.name.trim(),
+              native_language: 'en',
+              target_language: signupData.learningLanguage === 'Japanese' ? 'ja' : 'en'
+            })
+            .eq('id', userId);
+        } catch (profileError) {
+          console.warn('Profile write warning:', profileError?.message);
         }
       }
 

@@ -1,9 +1,15 @@
 import re
-from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Optional, List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field
 from app.core.security import get_current_user
-from app.core.db import db_register_user
+from app.core.db import (
+    db_register_user,
+    db_save_saved_phrase,
+    db_get_saved_phrases,
+    db_save_practice_score,
+    db_get_practice_history
+)
 
 router = APIRouter()
 
@@ -25,6 +31,24 @@ class SignupResponse(BaseModel):
     name: str
     message: str
     status: str
+    access_token: Optional[str] = None
+
+
+class SavePhraseRequest(BaseModel):
+    user_id: Optional[str] = None
+    original_text: str = Field(..., example="Where is the train station?")
+    translated_text: str = Field(..., example="駅はどこですか？")
+    romanized: Optional[str] = Field(None, example="Eki wa doko desu ka?")
+    notes: Optional[str] = Field(None, example="Saved from translation")
+    is_favorite: Optional[bool] = True
+
+
+class SavePracticeScoreRequest(BaseModel):
+    user_id: Optional[str] = None
+    target_text: str = Field(..., example="こんにちは")
+    overall_score: float = Field(..., example=95.0)
+    accuracy_rating: str = Field(..., example="Excellent")
+    language: Optional[str] = Field("ja", example="ja")
 
 
 @router.post("/signup", response_model=SignupResponse, summary="Register New User & Save to Supabase DB")
@@ -62,7 +86,8 @@ async def register_user(request: SignupRequest):
         email=user_email,
         name=request.name,
         message="User profile registered successfully",
-        status=result.get("status", "success")
+        status=result.get("status", "success"),
+        access_token=result.get("access_token")
     )
 
 
@@ -77,3 +102,74 @@ async def get_me(user: dict = Depends(get_current_user)):
         "email": user["email"],
         "metadata": user.get("user_metadata", {})
     }
+
+
+@router.post("/saved-phrases", summary="Save Phrase to Supabase Database")
+async def save_phrase(
+    request: SavePhraseRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Saves phrase to Supabase 'saved_phrases' table, using calling user's Bearer token if present.
+    """
+    token = authorization.split("Bearer ")[1].strip() if authorization and "Bearer " in authorization else None
+    user_id = request.user_id or "anonymous"
+
+    res = await db_save_saved_phrase(
+        user_id=user_id,
+        original_text=request.original_text,
+        translated_text=request.translated_text,
+        romanized=request.romanized,
+        notes=request.notes,
+        is_favorite=request.is_favorite or True,
+        token=token
+    )
+    return {"status": "success", "result": res}
+
+
+@router.get("/saved-phrases", summary="Get Saved Phrases from Supabase Database")
+async def get_saved_phrases(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Fetches saved phrases for a user from Supabase 'saved_phrases' table.
+    """
+    token = authorization.split("Bearer ")[1].strip() if authorization and "Bearer " in authorization else None
+    phrases = await db_get_saved_phrases(user_id=user_id, token=token)
+    return {"user_id": user_id, "count": len(phrases), "phrases": phrases}
+
+
+@router.post("/practice-history", summary="Save Practice Pronunciation Score to Supabase")
+async def save_practice_history(
+    request: SavePracticeScoreRequest,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Saves pronunciation evaluation score to Supabase 'practice_history' table.
+    """
+    token = authorization.split("Bearer ")[1].strip() if authorization and "Bearer " in authorization else None
+    user_id = request.user_id or "anonymous"
+
+    ok = await db_save_practice_score(
+        user_id=user_id,
+        target_text=request.target_text,
+        overall_score=request.overall_score,
+        accuracy_rating=request.accuracy_rating,
+        language=request.language or "ja",
+        token=token
+    )
+    return {"status": "success" if ok else "notice", "saved": ok}
+
+
+@router.get("/practice-history", summary="Get Practice Pronunciation History from Supabase")
+async def get_practice_history(
+    user_id: str,
+    authorization: Optional[str] = Header(None)
+):
+    """
+    Fetches pronunciation practice history for a user from Supabase 'practice_history' table.
+    """
+    token = authorization.split("Bearer ")[1].strip() if authorization and "Bearer " in authorization else None
+    history = await db_get_practice_history(user_id=user_id, token=token)
+    return {"user_id": user_id, "count": len(history), "history": history}
