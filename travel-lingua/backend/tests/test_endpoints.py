@@ -41,8 +41,11 @@ def test_roleplay_chat_endpoint():
 
 
 def test_ocr_extract_endpoint():
-    # Send mock image binary
-    files = {"file": ("menu_photo.jpg", b"fake-image-binary-data", "image/jpeg")}
+    from PIL import Image
+    import io
+    buf = io.BytesIO()
+    Image.new("RGB", (60, 60), color="white").save(buf, format="JPEG")
+    files = {"file": ("menu_photo.jpg", buf.getvalue(), "image/jpeg")}
     response = client.post("/api/v1/ocr/extract", files=files)
     assert response.status_code == 200
     data = response.json()
