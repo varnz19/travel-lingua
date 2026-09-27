@@ -18,6 +18,7 @@ import { ProfileContext } from '../../context/ProfileContext';
 import { TravelTheme } from '../../constants/TravelTheme';
 import { translatorService } from '../../services/translatorService';
 import { ocrService, OCRResult } from '../../services/ocrService';
+import { ttsService } from '../../services/ttsService';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { HapticsManager } from '../../utils/HapticsManager';
 import {
@@ -38,7 +39,6 @@ import {
   Check,
   Globe,
 } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import { getApiBaseUrl } from '../../services/apiConfig';
@@ -97,6 +97,12 @@ export default function TranslateScreen() {
 
   // Audio Playback State
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [speechRate, setSpeechRate] = useState<number>(0.85);
+
+  const toggleSpeechRate = () => {
+    HapticsManager.light();
+    setSpeechRate(prev => (prev === 0.85 ? 1.0 : prev === 1.0 ? 0.75 : 0.85));
+  };
 
   // Inline Pronunciation Trainer State
   const [isPracticing, setIsPracticing] = useState(false);
@@ -229,39 +235,24 @@ export default function TranslateScreen() {
     }
   };
 
-  // Locale mapper for Speech.speak
-  const getVoiceLocale = (langCode: string): string => {
-    const map: Record<string, string> = {
-      ja: 'ja-JP',
-      en: 'en-US',
-      es: 'es-ES',
-      fr: 'fr-FR',
-      de: 'de-DE',
-      it: 'it-IT',
-      ko: 'ko-KR',
-      zh: 'zh-CN',
-    };
-    return map[langCode] || 'en-US';
-  };
-
   // Controllable Sound Playback (Play / Stop toggle)
-  const handleToggleSpeak = (text: string, lang: string = 'ja') => {
+  const handleToggleSpeak = async (text: string, lang: string = targetLang) => {
     if (isPlayingAudio) {
       HapticsManager.light();
-      Speech.stop();
+      await ttsService.stop();
       setIsPlayingAudio(false);
       return;
     }
 
+    if (!text || !text.trim()) return;
+
     HapticsManager.medium();
-    Speech.stop();
     setIsPlayingAudio(true);
 
-    const speakClean = text.replace(/\(.*?\)/g, '').trim();
-
-    Speech.speak(speakClean, {
-      language: getVoiceLocale(lang),
-      rate: 0.85,
+    await ttsService.speak(text, {
+      language: lang,
+      rate: speechRate,
+      onStart: () => setIsPlayingAudio(true),
       onDone: () => setIsPlayingAudio(false),
       onStopped: () => setIsPlayingAudio(false),
       onError: () => setIsPlayingAudio(false),
@@ -566,6 +557,15 @@ export default function TranslateScreen() {
                     {getLangObj(targetLang).name.toUpperCase()} TRANSLATION
                   </Text>
                   <View style={styles.quickActions}>
+                    {/* Speech Speed Toggle */}
+                    <TouchableOpacity
+                      style={styles.speedBadge}
+                      onPress={toggleSpeechRate}
+                      accessibilityLabel="Speech Speed"
+                    >
+                      <Text style={styles.speedBadgeText}>{speechRate}x</Text>
+                    </TouchableOpacity>
+
                     {/* Controllable Audio Toggle */}
                     <TouchableOpacity
                       style={[styles.actionIcon, isPlayingAudio && styles.actionIconActive]}
@@ -733,12 +733,21 @@ export default function TranslateScreen() {
                           <Text style={styles.ocrTranslationLabel}>
                             {getLangObj(targetLang).name.toUpperCase()} TRANSLATION:
                           </Text>
-                          <TouchableOpacity
-                            style={styles.ocrAudioBtn}
-                            onPress={() => handleToggleSpeak(translatedText, targetLang)}
-                          >
-                            <Volume2 size={16} color={T.postmark} />
-                          </TouchableOpacity>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <TouchableOpacity
+                              style={styles.speedBadgeSmall}
+                              onPress={toggleSpeechRate}
+                              accessibilityLabel="Toggle Speech Rate"
+                            >
+                              <Text style={styles.speedBadgeTextSmall}>{speechRate}x</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={styles.ocrAudioBtn}
+                              onPress={() => handleToggleSpeak(translatedText, targetLang)}
+                            >
+                              <Volume2 size={16} color={T.postmark} />
+                            </TouchableOpacity>
+                          </View>
                         </View>
                         <Text style={styles.ocrTranslatedText}>{translatedText}</Text>
                         {pronunciation ? <Text style={styles.ocrPronunciationText}>🗣️ {pronunciation}</Text> : null}
@@ -1386,6 +1395,36 @@ const styles = StyleSheet.create({
   actionIconActive: {
     backgroundColor: T.postmark,
     borderColor: T.postmark,
+  },
+  speedBadge: {
+    height: 32,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: T.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: T.sandLine,
+  },
+  speedBadgeText: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 11,
+    color: T.postmark,
+  },
+  speedBadgeSmall: {
+    height: 26,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    backgroundColor: T.paper,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: T.sandLine,
+  },
+  speedBadgeTextSmall: {
+    fontFamily: 'PlusJakartaSans_700Bold',
+    fontSize: 10,
+    color: T.postmark,
   },
   translatedMainText: {
     fontSize: 18,

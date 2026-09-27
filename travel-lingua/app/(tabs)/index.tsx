@@ -27,7 +27,7 @@ import {
   MessageSquare,
   Sparkles,
 } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
+import { ttsService } from '../../services/ttsService';
 import { getApiBaseUrl } from '../../services/apiConfig';
 
 const T = TravelTheme.colors;
@@ -91,21 +91,21 @@ export default function HomeScreen() {
     return 'Good Evening';
   };
 
-  const handleToggleDailyAudio = () => {
+  const handleToggleDailyAudio = async () => {
     if (isPlayingDailyAudio) {
       HapticsManager.light();
-      Speech.stop();
+      await ttsService.stop();
       setIsPlayingDailyAudio(false);
       return;
     }
 
     HapticsManager.medium();
-    Speech.stop();
     setIsPlayingDailyAudio(true);
 
-    Speech.speak(dailyPhrase.audio_text || 'Arigatou gozaimasu', {
-      language: 'ja-JP',
+    await ttsService.speak(dailyPhrase.audio_text || 'Arigatou gozaimasu', {
+      language: 'ja',
       rate: 0.85,
+      onStart: () => setIsPlayingDailyAudio(true),
       onDone: () => setIsPlayingDailyAudio(false),
       onStopped: () => setIsPlayingDailyAudio(false),
       onError: () => setIsPlayingDailyAudio(false),

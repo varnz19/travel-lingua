@@ -48,3 +48,20 @@ def test_ocr_extract_endpoint():
     data = response.json()
     assert "extracted_text" in data
     assert "confidence" in data
+
+
+def test_tts_synthesize_endpoint():
+    payload = {"text": "Arigatou", "language": "ja", "speed": 1.0}
+    response = client.post("/api/v1/tts/synthesize", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert "audio_base64" in data
+    assert len(data["audio_base64"]) > 0
+    assert data["format"] == "audio/wav"
+
+
+def test_tts_stream_endpoint():
+    response = client.get("/api/v1/tts/stream?text=Hello&language=en")
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "audio/wav"
+    assert len(response.content) > 44

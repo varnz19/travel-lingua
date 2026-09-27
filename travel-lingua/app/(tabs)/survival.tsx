@@ -33,7 +33,7 @@ import {
   RotateCcw,
   Search,
 } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
+import { ttsService } from '../../services/ttsService';
 import { getApiBaseUrl } from '../../services/apiConfig';
 
 const T = TravelTheme.colors;
@@ -159,7 +159,7 @@ export default function LearnScreen() {
 
   const handleBackToCategories = () => {
     HapticsManager.light();
-    Speech.stop();
+    ttsService.stop();
     setPlayingPhraseId(null);
     setSelectedCategory(null);
     try {
@@ -172,20 +172,18 @@ export default function LearnScreen() {
   const handleToggleSound = async (phrase: TravelPhrase) => {
     if (playingPhraseId === phrase.id) {
       HapticsManager.light();
-      Speech.stop();
+      await ttsService.stop();
       setPlayingPhraseId(null);
       return;
     }
 
     HapticsManager.medium();
-    Speech.stop();
     setPlayingPhraseId(phrase.id);
 
-    const speakText = phrase.text.replace(/\(.*?\)/g, '').trim();
-
-    Speech.speak(speakText, {
-      language: 'ja-JP',
+    await ttsService.speak(phrase.text, {
+      language: 'ja',
       rate: speechRate,
+      onStart: () => setPlayingPhraseId(phrase.id),
       onDone: () => setPlayingPhraseId(null),
       onStopped: () => setPlayingPhraseId(null),
       onError: () => setPlayingPhraseId(null),
@@ -221,7 +219,7 @@ export default function LearnScreen() {
   // ── Pronunciation Practice Modal Handlers ──────────────────
   const openPronunciationPractice = (phrase: TravelPhrase) => {
     HapticsManager.medium();
-    Speech.stop();
+    ttsService.stop();
     setPlayingPhraseId(null);
     setPracticePhrase(phrase);
     setIsRecording(false);
@@ -232,7 +230,7 @@ export default function LearnScreen() {
 
   const closePronunciationPractice = () => {
     HapticsManager.light();
-    Speech.stop();
+    ttsService.stop();
     setPracticePhrase(null);
     setIsRecording(false);
     setAnalyzingAudio(false);
@@ -305,10 +303,9 @@ export default function LearnScreen() {
   const playReferenceAudio = () => {
     if (!practicePhrase) return;
     HapticsManager.light();
-    const speakClean = practicePhrase.text.replace(/\(.*?\)/g, '').trim();
-    Speech.speak(speakClean, {
-      language: 'ja-JP',
-      rate: 0.8,
+    ttsService.speak(practicePhrase.text, {
+      language: 'ja',
+      rate: speechRate,
     });
   };
 
@@ -431,9 +428,9 @@ export default function LearnScreen() {
                   style={styles.searchAudioBtn}
                   onPress={() => {
                     HapticsManager.light();
-                    Speech.speak(item.audio_text || item.japanese.split('(')[0], {
-                      language: 'ja-JP',
-                      rate: speechRate
+                    ttsService.speak(item.audio_text || item.japanese, {
+                      language: 'ja',
+                      rate: speechRate,
                     });
                   }}
                 >

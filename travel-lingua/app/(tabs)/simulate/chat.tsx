@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Speech from 'expo-speech';
 import { ArrowLeft, Volume2, Send, Sparkles } from 'lucide-react-native';
+import { ttsService } from '../../../services/ttsService';
 import { simulationService, DialogueNode } from '../../../services/simulationService';
 import { ProfileContext } from '../../../context/ProfileContext';
 import { TravelTheme } from '../../../constants/TravelTheme';
@@ -27,6 +27,12 @@ export default function SimulationChat() {
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
+    return () => {
+      ttsService.stop();
+    };
+  }, []);
+
+  useEffect(() => {
     const fetchScenario = async () => {
       const scenarioKey = typeof type === 'string' ? type : 'restaurant';
       const data = await simulationService.getScenario(scenarioKey);
@@ -35,7 +41,7 @@ export default function SimulationChat() {
         setNodes(data.nodes);
         const startNode = data.nodes[data.startNode];
         setChat([{ sender: 'bot', text: startNode.text }]);
-        Speech.speak(startNode.text, { language: 'ja', rate: speechSpeed || 1.0 });
+        ttsService.speak(startNode.text, { language: 'ja', rate: speechSpeed || 1.0 });
       }
     };
     fetchScenario();
@@ -59,8 +65,7 @@ export default function SimulationChat() {
       updatedChat.push({ sender: 'bot', text: nextNode.text });
       setChat(updatedChat);
       setCurrentNodeKey(nextNodeKey);
-      const cleanSpeak = nextNode.text.split('(')[0].trim();
-      Speech.speak(cleanSpeak, { language: 'ja', rate: speechSpeed || 1.0 });
+      ttsService.speak(nextNode.text, { language: 'ja', rate: speechSpeed || 1.0 });
     } else {
       updatedChat.push({ sender: 'bot', text: "Wonderful! We have successfully finished our dialogue practice." });
       setChat(updatedChat);
@@ -105,14 +110,12 @@ export default function SimulationChat() {
       // offline fallback
     }
 
-    const cleanSpeak = botReplyText.split('(')[0].replace(/[^\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\w\s]/g, '').trim();
     setChat([...updatedChat, { sender: 'bot', text: botReplyText }]);
-    Speech.speak(cleanSpeak || "Hai! Arigatou gozaimasu", { language: 'ja', rate: speechSpeed || 1.0 });
+    ttsService.speak(botReplyText, { language: 'ja', rate: speechSpeed || 1.0 });
   };
 
   const handleReplayTts = (text: string) => {
-    const cleanSpeak = text.split('(')[0].trim();
-    Speech.speak(cleanSpeak, { language: 'ja', rate: speechSpeed || 1.0 });
+    ttsService.speak(text, { language: 'ja', rate: speechSpeed || 1.0 });
   };
 
   const currentNode = nodes[currentNodeKey];
@@ -122,7 +125,13 @@ export default function SimulationChat() {
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity
+            onPress={() => {
+              ttsService.stop();
+              router.back();
+            }}
+            style={styles.backBtn}
+          >
             <ArrowLeft size={20} color={T.ink} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{scenarioName}</Text>
