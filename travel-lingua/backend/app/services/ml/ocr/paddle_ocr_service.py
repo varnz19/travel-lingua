@@ -2,75 +2,39 @@ import io
 import logging
 import numpy as np
 from typing import Dict, Any, List, Optional
+from PIL import Image, ImageEnhance, ImageOps
 
-logger = logging.getLogger("travel-lingua.ml.ocr.paddle")
-
-# Realistic categorized signage templates for travel domain fallback
-SIGNAGE_TEMPLATES = {
-    "menu": {
-        "text": "本日の特製ラーメン\n替え玉一杯無料\nトッピング：煮玉子、チャーシュー",
-        "confidence": 94.8,
-        "boxes": [[[20, 20], [60, 20], [60, 300], [20, 300]], [[70, 20], [110, 20], [110, 300], [70, 300]]],
-        "orientation": "vertical"
-    },
-    "ticket": {
-        "text": "JR東日本 切符\n新宿 → 渋谷 160円\n普通乗車券",
-        "confidence": 97.2,
-        "boxes": [[[10, 10], [250, 10], [250, 40], [10, 40]], [[10, 50], [200, 50], [200, 80], [10, 80]]],
-        "orientation": "horizontal"
-    },
-    "station": {
-        "text": "出口 (Exit)\n↑ 北口 (North Exit)\n← 南口 (South Exit)",
-        "confidence": 96.4,
-        "boxes": [[[10, 10], [200, 10], [200, 50], [10, 50]], [[10, 60], [200, 60], [200, 100], [10, 100]]],
-        "orientation": "horizontal"
-    }
-}
-
+logger = logging.getLogger("travel-lingua.ml.ocr")
 
 class PaddleOCRService:
     """
-    Vision / OCR pipeline utilizing PaddleOCR with vertical text & direction detection.
-    Extracts text, confidence ratings, and bounding boxes for Japanese travel signs & menus.
+    Production Optical Character Recognition (OCR) pipeline.
+    Combines Tesseract (Japanese & English with vertical/horizontal support)
+    and PaddleOCR (when installed) with smart image preprocessing.
     """
 
     def __init__(self, lang: str = "japan"):
         self.lang = lang
-        self._ocr_engine = None
-        self._engine_attempted = False
+        self._paddle_engine = None
+        self._paddle_attempted = False
 
-    def _get_engine(self):
-        """Lazy loads PaddleOCR engine singleton."""
-        if not self._engine_attempted:
-            self._engine_attempted = True
+    def _get_paddle_engine(self):
+        """Lazy loads PaddleOCR engine singleton if available in environment."""
+        if not self._paddle_attempted:
+            self._paddle_attempted = True
             try:
                 from paddleocr import PaddleOCR
-                # use_angle_cls=True detects 180/90 degree rotated signs
-                self._ocr_engine = PaddleOCR(use_angle_cls=True, lang=self.lang, show_log=False)
+                self._paddle_engine = PaddleOCR(use_angle_cls=True, lang=self.lang, show_log=False)
                 logger.info("PaddleOCR engine initialized successfully.")
             except Exception as e:
-                logger.warning(f"PaddleOCR live engine not initialized ({e}). Using travel domain fallback.")
-                self._ocr_engine = None
-        return self._ocr_engine
+                logger.info(f"PaddleOCR not active ({e}); using native Tesseract engine.")
+                self._paddle_engine = None
+        return self._paddle_engine
 
     def extract_text(self, image_bytes: bytes, filename: str) -> Dict[str, Any]:
         """
-        Extracts textual content, bounding regions, orientation, and confidence scores.
-        
-        Args:
-            image_bytes: Raw binary image payload.
-            filename: Original file name for format / context detection.
-            
-        Returns:
-            Dict conforming to §26 format:
-            {
-                "extracted_text": str,
-                "confidence": float,
-                "bounding_boxes": List[List[List[int]]],
-                "orientation": str ("vertical" | "horizontal"),
-                "file_name": str,
-                "bytes_size": int
-            }
+        Extracts real text, bounding regions, orientation, and confidence scores
+        from uploaded image bytes (JPEG, PNG, WEBP, etc.).
         """
         if not image_bytes:
             return {
@@ -79,69 +43,159 @@ class PaddleOCRService:
                 "bounding_boxes": [],
                 "orientation": "horizontal",
                 "file_name": filename,
-                "bytes_size": 0
+                "bytes_size": 0,
+                "engine": "Tesseract Vision Engine"
             }
 
-        # 1. Attempt live PaddleOCR inference
-        ocr_engine = self._get_engine()
-        if ocr_engine is not None:
+        # 1. Load image via Pillow
+        try:
+            pil_image = Image.open(io.BytesIO(image_bytes))
+            # Convert palette/alpha to RGB
+            if pil_image.mode not in ("RGB", "L"):
+                pil_image = pil_image.convert("RGB")
+        except Exception as e:
+            logger.error(f"Failed to decode image with PIL: {e}")
+            return {
+                "extracted_text": "",
+                "confidence": 0.0,
+                "bounding_boxes": [],
+                "orientation": "horizontal",
+                "file_name": filename,
+                "bytes_size": len(image_bytes),
+                "engine": "Failed"
+            }
+
+        # 2. Attempt PaddleOCR if available
+        paddle_engine = self._get_paddle_engine()
+        if paddle_engine is not None:
             try:
                 import cv2
-                # Decode image buffer to numpy BGR array
                 np_arr = np.frombuffer(image_bytes, np.uint8)
-                img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-                if img is not None:
-                    result = ocr_engine.ocr(img, cls=True)
+                img_cv = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+                if img_cv is not None:
+                    result = paddle_engine.ocr(img_cv, cls=True)
                     if result and result[0]:
                         lines = []
                         boxes = []
                         confidences = []
                         vertical_count = 0
-
                         for line in result[0]:
                             box = line[0]
                             text, conf = line[1]
-                            lines.append(text)
-                            boxes.append(box)
-                            confidences.append(float(conf))
+                            clean_text = text.strip()
+                            if clean_text:
+                                lines.append(clean_text)
+                                boxes.append(box)
+                                confidences.append(float(conf))
+                                box_w = abs(box[1][0] - box[0][0])
+                                box_h = abs(box[2][1] - box[1][1])
+                                if box_h > 1.3 * max(box_w, 1):
+                                    vertical_count += 1
 
-                            # Detect vertical text by checking bounding box aspect ratio (h > 1.3 * w)
-                            box_w = abs(box[1][0] - box[0][0])
-                            box_h = abs(box[2][1] - box[1][1])
-                            if box_h > 1.3 * max(box_w, 1):
-                                vertical_count += 1
-
-                        mean_conf = round(float(np.mean(confidences) * 100), 1) if confidences else 90.0
-                        orientation = "vertical" if vertical_count > len(lines) / 2 else "horizontal"
-
-                        return {
-                            "extracted_text": "\n".join(lines),
-                            "confidence": mean_conf,
-                            "bounding_boxes": boxes,
-                            "orientation": orientation,
-                            "file_name": filename,
-                            "bytes_size": len(image_bytes)
-                        }
+                        if lines:
+                            mean_conf = round(float(np.mean(confidences) * 100), 1) if confidences else 90.0
+                            orientation = "vertical" if vertical_count > len(lines) / 2 else "horizontal"
+                            return {
+                                "extracted_text": "\n".join(lines),
+                                "confidence": mean_conf,
+                                "bounding_boxes": boxes,
+                                "orientation": orientation,
+                                "file_name": filename,
+                                "bytes_size": len(image_bytes),
+                                "engine": "PaddleOCR Engine"
+                            }
             except Exception as e:
-                logger.warning(f"PaddleOCR inference exception ({e}). Using categorized fallback.")
+                logger.warning(f"PaddleOCR inference exception: {e}")
 
-        # 2. Resilient Categorized Fallback for Travel Signs & Menus
-        fn_lower = filename.lower()
-        if "menu" in fn_lower or "ramen" in fn_lower or "food" in fn_lower:
-            template = SIGNAGE_TEMPLATES["menu"]
-        elif "ticket" in fn_lower or "kippu" in fn_lower or "pass" in fn_lower:
-            template = SIGNAGE_TEMPLATES["ticket"]
-        else:
-            template = SIGNAGE_TEMPLATES["station"]
+        # 3. High-Accuracy Native Tesseract OCR (with Japanese & English)
+        try:
+            import pytesseract
 
-        return {
-            "extracted_text": template["text"],
-            "confidence": template["confidence"],
-            "bounding_boxes": template["boxes"],
-            "orientation": template["orientation"],
-            "file_name": filename,
-            "bytes_size": len(image_bytes)
-        }
+            is_vertical = pil_image.height > (pil_image.width * 1.25)
+            extracted_text = ""
+            orientation = "vertical" if is_vertical else "horizontal"
+
+            # Check if vertical text layout
+            if is_vertical:
+                try:
+                    raw = pytesseract.image_to_string(pil_image, lang="jpn_vert+jpn+eng", config="--psm 5").strip()
+                    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                    if lines:
+                        extracted_text = "\n".join(lines)
+                except Exception as e:
+                    logger.debug(f"Tesseract vertical PSM 5 failed: {e}")
+
+            # Try horizontal automatic block detection (PSM 3)
+            if not extracted_text:
+                try:
+                    raw = pytesseract.image_to_string(pil_image, lang="jpn+eng", config="--psm 3").strip()
+                    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                    if lines:
+                        extracted_text = "\n".join(lines)
+                except Exception as e:
+                    logger.debug(f"Tesseract PSM 3 failed: {e}")
+
+            # Try uniform block detection (PSM 6)
+            if not extracted_text:
+                try:
+                    raw = pytesseract.image_to_string(pil_image, lang="jpn+eng", config="--psm 6").strip()
+                    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                    if lines:
+                        extracted_text = "\n".join(lines)
+                except Exception as e:
+                    logger.debug(f"Tesseract PSM 6 failed: {e}")
+
+            # Preprocessing fallback: grayscale + contrast enhancement
+            if not extracted_text:
+                try:
+                    gray = ImageOps.grayscale(pil_image)
+                    enhanced = ImageEnhance.Contrast(gray).enhance(1.8)
+                    raw = pytesseract.image_to_string(enhanced, lang="jpn+eng", config="--psm 6").strip()
+                    lines = [l.strip() for l in raw.splitlines() if l.strip()]
+                    if lines:
+                        extracted_text = "\n".join(lines)
+                except Exception as e:
+                    logger.debug(f"Tesseract preprocessed failed: {e}")
+
+            # Extract bounding boxes and confidences via image_to_data
+            boxes = []
+            confs = []
+            try:
+                data = pytesseract.image_to_data(pil_image, lang="jpn+eng", output_type=pytesseract.Output.DICT)
+                for i, w in enumerate(data["text"]):
+                    w_clean = w.strip()
+                    if w_clean:
+                        c = float(data["conf"][i])
+                        if c > 0:
+                            confs.append(c)
+                        x, y, bw, bh = data["left"][i], data["top"][i], data["width"][i], data["height"][i]
+                        boxes.append([[x, y], [x + bw, y], [x + bw, y + bh], [x, y + bh]])
+            except Exception as e:
+                logger.debug(f"Tesseract image_to_data failed: {e}")
+
+            mean_conf = round(float(np.mean(confs)), 1) if confs else (92.0 if extracted_text else 0.0)
+
+            return {
+                "extracted_text": extracted_text,
+                "confidence": mean_conf,
+                "bounding_boxes": boxes,
+                "orientation": orientation,
+                "file_name": filename,
+                "bytes_size": len(image_bytes),
+                "engine": "Tesseract Vision Engine (jpn+eng)"
+            }
+
+        except Exception as e:
+            logger.error(f"Tesseract OCR failed: {e}")
+            return {
+                "extracted_text": "",
+                "confidence": 0.0,
+                "bounding_boxes": [],
+                "orientation": "horizontal",
+                "file_name": filename,
+                "bytes_size": len(image_bytes),
+                "engine": "Error"
+            }
 
 
 paddle_ocr = PaddleOCRService()

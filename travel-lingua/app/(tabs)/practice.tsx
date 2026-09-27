@@ -390,20 +390,31 @@ export default function TranslateScreen() {
       setInputText(result.extractedText);
       setLoading(true);
       try {
-        const translationRes = await translatorService.translate(result.extractedText, 'ja', 'en');
-        setTranslatedText(translationRes.translatedText);
-        setPronunciation(translationRes.pronunciation || '');
-        setIsSaved(false);
-        resultFadeAnim.setValue(0);
-        Animated.timing(resultFadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+        if (result.translatedText) {
+          setTranslatedText(result.translatedText);
+          setPronunciation('');
+          setIsSaved(false);
+          resultFadeAnim.setValue(1);
+        } else {
+          const translationRes = await translatorService.translate(
+            result.extractedText,
+            (result.detectedLanguage as any) || 'ja',
+            targetLang === 'ja' ? 'en' : targetLang
+          );
+          setTranslatedText(translationRes.translatedText);
+          setPronunciation(translationRes.pronunciation || '');
+          setIsSaved(false);
+          resultFadeAnim.setValue(0);
+          Animated.timing(resultFadeAnim, { toValue: 1, duration: 250, useNativeDriver: true }).start();
+        }
       } catch (_e) {
-        setTranslatedText(`[English Translation] ${result.extractedText}`);
+        setTranslatedText(`[Translation] ${result.extractedText}`);
         resultFadeAnim.setValue(1);
       } finally {
         setLoading(false);
       }
-    } catch (_e) {
-      Alert.alert('OCR Failed', 'Could not extract text. Try a clearer photo.');
+    } catch (e: any) {
+      Alert.alert('OCR Failed', e?.message || 'Could not extract text. Try a clearer photo.');
     } finally {
       setOcrLoading(false);
     }
