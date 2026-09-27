@@ -267,20 +267,45 @@ class TranslationEngine:
                 logger.warning(f"NLLB-200 live inference fallback: {e}")
 
         # ----------------------------------------------------
+        # TIER 3: High-Accuracy Neural Translation Service
+        # ----------------------------------------------------
+        try:
+            import urllib.request
+            import urllib.parse
+            import json
+
+            src_code = "ja" if s_lang == "ja" else s_lang
+            tgt_code = "en" if t_lang == "en" else t_lang
+            enc_text = urllib.parse.quote(clean_text)
+            url = f"https://api.mymemory.translated.net/get?q={enc_text}&langpair={src_code}|{tgt_code}"
+            req = urllib.request.Request(url, headers={"User-Agent": "TravelLingua/2.0 (LanguageTranslator)"})
+            with urllib.request.urlopen(req, timeout=6) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+                neural_text = payload.get("responseData", {}).get("translatedText", "").strip()
+                if neural_text and not neural_text.upper().startswith("MYMEMORY WARNING"):
+                    # Generate accurate Romanization for Japanese text
+                    if t_lang == "ja" or s_lang == "ja":
+                        romaji = self._generate_romanization(
+                            neural_text if t_lang == "ja" else clean_text,
+                            "ja"
+                        )
+                    else:
+                        romaji = neural_text
+
+                    return {
+                        "translated_text": neural_text,
+                        "romanized": romaji,
+                        "detected_lang": s_lang
+                    }
+        except Exception as net_err:
+            logger.warning(f"Neural translation service query failed: {net_err}")
+
+        # ----------------------------------------------------
         # Fallback Dynamic Translation
         # ----------------------------------------------------
-        if s_lang == "ja" and t_lang == "en":
-            translated = f"[EN] {clean_text}"
-            romaji = kana_to_romaji(clean_text)
-        elif s_lang == "en" and t_lang == "ja":
-            translated = f"{clean_text} です"
-            romaji = f"{kana_to_romaji(clean_text)} desu"
-        else:
-            translated = f"[{t_lang.upper()}] {clean_text}"
-            romaji = clean_text
-
+        romaji = kana_to_romaji(clean_text) if s_lang == "ja" else clean_text
         return {
-            "translated_text": translated,
+            "translated_text": clean_text,
             "romanized": romaji,
             "detected_lang": s_lang
         }

@@ -35,6 +35,7 @@ import {
 } from 'lucide-react-native';
 import { ttsService } from '../../services/ttsService';
 import { sttService } from '../../services/sttService';
+import { scorePronunciationAccuracy } from '../../services/pronunciationScorer';
 import { getApiBaseUrl } from '../../services/apiConfig';
 
 const T = TravelTheme.colors;
@@ -109,6 +110,8 @@ export default function LearnScreen() {
   const [isRecording, setIsRecording] = useState(false);
   const [analyzingAudio, setAnalyzingAudio] = useState(false);
   const [practiceScore, setPracticeScore] = useState<number | null>(null);
+  const [practiceFeedback, setPracticeFeedback] = useState<string>('');
+  const [lastSpokenText, setLastSpokenText] = useState<string>('');
   const [displayScore, setDisplayScore] = useState(0);
 
   // Animations
@@ -244,6 +247,8 @@ export default function LearnScreen() {
     setIsRecording(true);
     setAnalyzingAudio(false);
     setPracticeScore(null);
+    setPracticeFeedback('');
+    setLastSpokenText('');
 
     await sttService.startListening({
       language: 'ja',
@@ -251,40 +256,32 @@ export default function LearnScreen() {
         setIsRecording(false);
         setAnalyzingAudio(true);
 
-        const cleanSpoken = (spokenText || '').toLowerCase().replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '').trim();
-        const cleanTarget = (practicePhrase.text || '').toLowerCase().replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '').trim();
-
-        let finalScore = 90;
-        if (cleanSpoken && cleanTarget) {
-          if (cleanSpoken === cleanTarget) {
-            finalScore = 98;
-          } else if (cleanTarget.includes(cleanSpoken) || cleanSpoken.includes(cleanTarget)) {
-            finalScore = 94;
-          } else {
-            const targetWords = cleanTarget.split(' ');
-            const spokenWords = cleanSpoken.split(' ');
-            const matched = targetWords.filter(w => spokenWords.includes(w)).length;
-            const ratio = matched / Math.max(targetWords.length, 1);
-            finalScore = Math.round(78 + ratio * 18);
-          }
-        }
+        const target = practicePhrase.text || '';
+        const result = scorePronunciationAccuracy(spokenText, target, 'ja');
 
         setAnalyzingAudio(false);
-        setPracticeScore(finalScore);
-        animateScoreReveal(finalScore);
-        recordPracticeResult(practicePhrase.id, finalScore);
+        setPracticeScore(result.score);
+        setPracticeFeedback(result.feedback);
+        setLastSpokenText(result.spokenText);
+        animateScoreReveal(result.score);
+        recordPracticeResult(practicePhrase.id, result.score, target, result.accuracyRating);
 
-        if (!savedCompleted.includes(practicePhrase.id)) {
+        if (result.score >= 80 && !savedCompleted.includes(practicePhrase.id)) {
           setSavedCompleted(prev => [...prev, practicePhrase.id]);
         }
-        HapticsManager.success();
+        if (result.score >= 70) {
+          HapticsManager.success();
+        } else {
+          HapticsManager.light();
+        }
       },
       onError: () => {
         setIsRecording(false);
         setAnalyzingAudio(false);
-        const finalScore = 88;
-        setPracticeScore(finalScore);
-        animateScoreReveal(finalScore);
+        setPracticeScore(0);
+        setPracticeFeedback('No speech detected. Please speak clearly into the microphone.');
+        setLastSpokenText('');
+        animateScoreReveal(0);
       },
       onEnd: () => {
         setIsRecording(false);
@@ -741,7 +738,10 @@ export default function LearnScreen() {
                 {/* Score & Feedback Box */}
                 {practiceScore !== null && (
                   <View style={styles.scoreFeedbackBox}>
-                    <View style={styles.scoreCircle}>
+                    <View style={[
+                      styles.scoreCircle,
+                      displayScore >= 90 ? { borderColor: '#10B981' } : displayScore >= 70 ? { borderColor: '#F59E0B' } : { borderColor: '#EF4444' }
+                    ]}>
                       <Text style={styles.scoreNumText}>{displayScore}%</Text>
                       <Text style={styles.scoreSubText}>ACCURACY</Text>
                     </View>
@@ -750,13 +750,20 @@ export default function LearnScreen() {
                       <Text style={styles.scoreFeedbackTitle}>
                         {displayScore >= 90
                           ? '🌟 Excellent! Native-level clarity.'
-                          : '👍 Good attempt! Clear cadence.'}
+                          : displayScore >= 75
+                          ? '👍 Good attempt! Clear pronunciation.'
+                          : displayScore >= 50
+                          ? '⚠️ Partially understood. Practice cadence.'
+                          : '❌ Try Again. Listen to audio first.'}
                       </Text>
-                      <Text style={styles.scoreFeedbackDetail}>
-                        {displayScore >= 90
-                          ? 'Phrase has been marked as Mastered in your phrasebook.'
-                          : 'Try again to sharpen syllable cadence before your trip.'}
-                      </Text>
+                      {practiceFeedback ? (
+                        <Text style={styles.scoreFeedbackDetail}>{practiceFeedback}</Text>
+                      ) : null}
+                      {lastSpokenText ? (
+                        <Text style={[styles.scoreFeedbackDetail, { marginTop: 4, fontStyle: 'italic', color: T.postmark }]}>
+                          Heard: "{lastSpokenText}"
+                        </Text>
+                      ) : null}
                     </View>
                   </View>
                 )}

@@ -65,14 +65,35 @@ class TTSService {
   }
 
   /**
-   * Speaks the given text using local native speech engine or backend streaming.
+   * Automatically determines whether text is Japanese, English, or other language
+   * based on unicode character ranges to prevent English speech engines from reading Japanese phonetics.
+   */
+  public detectLanguageFromText(text: string, fallbackLang: string = 'ja'): string {
+    if (!text) return fallbackLang;
+    // Check Japanese Kana and Kanji (Hiragana \u3040-\u309F, Katakana \u30A0-\u30FF, CJK Unified \u4E00-\u9FFF)
+    const hasJapanese = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(text);
+    if (hasJapanese) return 'ja';
+
+    // If text consists of standard Latin alphabet and English words
+    const isPureLatin = /^[A-Za-z0-9\s.,'?!/()\-]+$/.test(text.trim());
+    if (isPureLatin && fallbackLang === 'ja') {
+      return 'en';
+    }
+
+    return fallbackLang;
+  }
+
+  /**
+   * Speaks the given text using neural backend streaming (Edge-TTS) or high-quality native voice.
    */
   public async speak(text: string, options: TTSOptions = {}): Promise<void> {
     const clean = this.cleanText(text);
     if (!clean) return;
 
-    const lang = options.language || 'ja';
-    const rate = options.rate !== undefined ? options.rate : 0.85;
+    // Correctly resolve language from text content to prevent voice mismatch
+    const requestedLang = options.language || 'ja';
+    const lang = this.detectLanguageFromText(clean, requestedLang);
+    const rate = options.rate !== undefined ? options.rate : 0.95;
     const pitch = options.pitch !== undefined ? options.pitch : 1.0;
 
     // Stop previous speech if any
@@ -81,7 +102,8 @@ class TTSService {
     this._isSpeaking = true;
     options.onStart?.();
 
-    if (options.useBackend && typeof Audio !== 'undefined') {
+    // Default to Neural Backend (Edge-TTS Microsoft voices: ja-JP-NanamiNeural / en-US-JennyNeural)
+    if (options.useBackend !== false && typeof Audio !== 'undefined') {
       try {
         const streamUrl = this.getAudioStreamUrl(clean, lang, rate);
         const audio = new Audio(streamUrl);
@@ -119,6 +141,39 @@ class TTSService {
     options: TTSOptions
   ): void {
     const locale = this.getLocale(lang);
+
+    // Browser Web Speech API specialized voice selection
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        const utter = new SpeechSynthesisUtterance(clean);
+        utter.lang = locale;
+        utter.rate = rate;
+        utter.pitch = pitch;
+
+        const voices = window.speechSynthesis.getVoices();
+        const prefix = lang.toLowerCase();
+        const matched = voices.find(v => v.lang.toLowerCase().startsWith(prefix));
+        if (matched) {
+          utter.voice = matched;
+        }
+
+        utter.onend = () => {
+          this._isSpeaking = false;
+          options.onDone?.();
+        };
+        utter.onerror = (err) => {
+          this._isSpeaking = false;
+          options.onError?.(err);
+        };
+
+        window.speechSynthesis.speak(utter);
+        return;
+      } catch (_err) {
+        // Fallback to expo-speech
+      }
+    }
+
     try {
       Speech.speak(clean, {
         language: locale,

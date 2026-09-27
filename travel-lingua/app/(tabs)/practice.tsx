@@ -20,6 +20,7 @@ import { translatorService } from '../../services/translatorService';
 import { ocrService, OCRResult } from '../../services/ocrService';
 import { ttsService } from '../../services/ttsService';
 import { sttService } from '../../services/sttService';
+import { scorePronunciationAccuracy } from '../../services/pronunciationScorer';
 import { AnimatedPressable } from '../../components/AnimatedPressable';
 import { HapticsManager } from '../../utils/HapticsManager';
 import {
@@ -112,6 +113,8 @@ export default function TranslateScreen() {
   const [isPracticing, setIsPracticing] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [accuracyScore, setAccuracyScore] = useState<number | null>(null);
+  const [practiceFeedback, setPracticeFeedback] = useState<string>('');
+  const [lastSpokenText, setLastSpokenText] = useState<string>('');
 
   // Camera / OCR State
   const [ocrImageUri, setOcrImageUri] = useState<string | null>(null);
@@ -312,40 +315,33 @@ export default function TranslateScreen() {
     setIsPracticing(true);
     setIsRecording(true);
     setAccuracyScore(null);
+    setPracticeFeedback('');
+    setLastSpokenText('');
 
     const targetText = translatedText || inputText || 'Arigatou gozaimasu';
 
     await sttService.startListening({
       language: targetLang,
       onFinalResult: (spokenText) => {
-        const cleanSpoken = (spokenText || '').toLowerCase().replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '').trim();
-        const cleanTarget = targetText.toLowerCase().replace(/[^\w\s\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/g, '').trim();
-
-        let score = 88;
-        if (cleanSpoken && cleanTarget) {
-          if (cleanSpoken === cleanTarget) {
-            score = 98;
-          } else if (cleanTarget.includes(cleanSpoken) || cleanSpoken.includes(cleanTarget)) {
-            score = 93;
-          } else {
-            const targetWords = cleanTarget.split(' ');
-            const spokenWords = cleanSpoken.split(' ');
-            const matched = targetWords.filter(w => spokenWords.includes(w)).length;
-            const ratio = matched / Math.max(targetWords.length, 1);
-            score = Math.round(76 + ratio * 20);
-          }
-        }
+        const result = scorePronunciationAccuracy(spokenText, targetText, targetLang);
         setIsRecording(false);
-        setAccuracyScore(score);
-        animateScoreReveal(score);
-        recordPracticeResult('sp_custom_' + Date.now(), score);
-        HapticsManager.success();
+        setAccuracyScore(result.score);
+        setPracticeFeedback(result.feedback);
+        setLastSpokenText(result.spokenText);
+        animateScoreReveal(result.score);
+        recordPracticeResult('sp_custom_' + Date.now(), result.score, targetText, result.accuracyRating);
+        if (result.score >= 75) {
+          HapticsManager.success();
+        } else {
+          HapticsManager.light();
+        }
       },
       onError: () => {
         setIsRecording(false);
-        const fallbackScore = 88;
-        setAccuracyScore(fallbackScore);
-        animateScoreReveal(fallbackScore);
+        setAccuracyScore(0);
+        setPracticeFeedback('No speech detected. Please speak clearly into the mic.');
+        setLastSpokenText('');
+        animateScoreReveal(0);
       },
       onEnd: () => {
         setIsRecording(false);
@@ -668,17 +664,25 @@ export default function TranslateScreen() {
                       </View>
                     ) : accuracyScore !== null ? (
                       <View style={styles.scoreBox}>
-                        <View style={styles.scoreCircle}>
+                        <View style={[
+                          styles.scoreCircle,
+                          displayScore >= 90 ? { borderColor: '#10B981' } : displayScore >= 70 ? { borderColor: '#F59E0B' } : { borderColor: '#EF4444' }
+                        ]}>
                           <Text style={styles.scoreNum}>{displayScore}%</Text>
                           <Text style={styles.scoreSub}>ACCURACY</Text>
                         </View>
                         <View style={{ flex: 1, paddingLeft: 12 }}>
                           <Text style={styles.scoreTitle}>
-                            {displayScore >= 90 ? '🌟 Excellent Pronunciation!' : '👍 Good effort! Clear cadence.'}
+                            {displayScore >= 90 ? '🌟 Excellent Native Accent!' : displayScore >= 75 ? '👍 Good Pronunciation!' : displayScore >= 50 ? '⚠️ Needs More Practice' : '❌ Pronunciation Unrecognized'}
                           </Text>
-                          <Text style={styles.scoreDetail}>
-                            Logged to your Travel Readiness breakdown in Profile.
-                          </Text>
+                          {practiceFeedback ? (
+                            <Text style={styles.scoreDetail}>{practiceFeedback}</Text>
+                          ) : null}
+                          {lastSpokenText ? (
+                            <Text style={[styles.scoreDetail, { marginTop: 4, fontStyle: 'italic', color: T.postmark }]}>
+                              Heard: "{lastSpokenText}"
+                            </Text>
+                          ) : null}
                         </View>
                       </View>
                     ) : null}

@@ -240,20 +240,11 @@ export const translatorService = {
     }
 
     // Dynamic fallback for any text
-    if (source === 'ja') {
-      return {
-        translatedText: `[${target.toUpperCase()}] ${text}`,
-        pronunciation: `Phonetics: ${text}`,
-        source,
-        target
-      };
-    } else {
-      return {
-        translatedText: `[${target.toUpperCase()}] ${text}`,
-        pronunciation: `Phonetics for: ${text}`,
-        source,
-        target
-      };
-    }
+    return {
+      translatedText: text,
+      pronunciation: source === 'ja' ? `Romaji: ${text}` : undefined,
+      source,
+      target
+    };
   }
 };
