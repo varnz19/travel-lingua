@@ -15,13 +15,13 @@ router = APIRouter()
 
 
 class SignupRequest(BaseModel):
-    email: Optional[str] = Field(None, example="traveler@example.com")
-    phone_number: Optional[str] = Field(None, example="+91 9876543210")
-    username: str = Field(..., example="demo_traveler")
-    name: str = Field(..., example="Demo Traveler")
-    password: str = Field(..., min_length=8, example="StrongPass123!")
-    destination: Optional[str] = Field("Tokyo, Japan", example="Tokyo, Japan")
-    learning_language: Optional[str] = Field("Japanese", example="Japanese")
+    email: Optional[str] = Field(None, examples=["traveler@example.com"])
+    phone_number: Optional[str] = Field(None, examples=["+91 9876543210"])
+    username: str = Field(..., examples=["demo_traveler"])
+    name: str = Field(..., examples=["Demo Traveler"])
+    password: str = Field(..., min_length=8, examples=["StrongPass123!"])
+    destination: Optional[str] = Field("Tokyo, Japan", examples=["Tokyo, Japan"])
+    learning_language: Optional[str] = Field("Japanese", examples=["Japanese"])
 
 
 class SignupResponse(BaseModel):
@@ -36,19 +36,19 @@ class SignupResponse(BaseModel):
 
 class SavePhraseRequest(BaseModel):
     user_id: Optional[str] = None
-    original_text: str = Field(..., example="Where is the train station?")
-    translated_text: str = Field(..., example="駅はどこですか？")
-    romanized: Optional[str] = Field(None, example="Eki wa doko desu ka?")
-    notes: Optional[str] = Field(None, example="Saved from translation")
+    original_text: str = Field(..., examples=["Where is the train station?"])
+    translated_text: str = Field(..., examples=["駅はどこですか？"])
+    romanized: Optional[str] = Field(None, examples=["Eki wa doko desu ka?"])
+    notes: Optional[str] = Field(None, examples=["Saved from translation"])
     is_favorite: Optional[bool] = True
 
 
 class SavePracticeScoreRequest(BaseModel):
     user_id: Optional[str] = None
-    target_text: str = Field(..., example="こんにちは")
-    overall_score: float = Field(..., example=95.0)
-    accuracy_rating: str = Field(..., example="Excellent")
-    language: Optional[str] = Field("ja", example="ja")
+    target_text: str = Field(..., examples=["こんにちは"])
+    overall_score: float = Field(..., examples=[95.0])
+    accuracy_rating: str = Field(..., examples=["Excellent"])
+    language: Optional[str] = Field("ja", examples=["ja"])
 
 
 @router.post("/signup", response_model=SignupResponse, summary="Register New User & Save to Supabase DB")

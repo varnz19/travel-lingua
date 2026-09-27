@@ -1,8 +1,12 @@
 import io
 import os
 import logging
+import warnings
 import numpy as np
 from typing import Optional, Dict, Any, Union
+
+# Suppress harmless internal faster_whisper runtime warnings (e.g. division by zero in zero-padded matmuls)
+warnings.filterwarnings("ignore", category=RuntimeWarning, module="faster_whisper")
 from app.services.ml.model_manager import model_manager
 from app.services.ml.asr.audio_utils import validate_and_standardize_audio, is_speech_active
 
@@ -57,7 +61,10 @@ class WhisperASRService:
         else:
             return {"text": "", "language": language or "en", "vad_active": False}
 
-        # 2. Silero Voice Activity Detection check
+        # 2. Silero Voice Activity Detection and silence check
+        if audio_array is not None and (len(audio_array) == 0 or np.max(np.abs(audio_array)) < 1e-4):
+            return {"text": "", "language": language or "en", "vad_active": False}
+
         if not vad_active:
             logger.debug("Silero-VAD: Non-speech or silence detected. Skipping transcription.")
             return {"text": "", "language": language or "en", "vad_active": False}
